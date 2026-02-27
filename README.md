@@ -78,6 +78,11 @@ Packages are grouped by category for easier navigation. Install any package usin
 | `deepce` | Docker enumeration and exploitation tool |
 | `dropbearmulti` | SSH server/client (Dropbear) |
 
+### 🧪 Experimental
+| Name | Description |
+|------|-------------|
+| `proot-ubuntu` | Lightweight Ubuntu 24.04 (via PRoot) |
+
 ## 🏗️ Default Packages (Built-in)
 
 The following commands are available immediately after setup, provided by the core **Bash**, **Curl**, and the **BusyBox** symlink farm:

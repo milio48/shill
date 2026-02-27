@@ -67,6 +67,8 @@ Packages are grouped by category for easier navigation. Install any package usin
 | `sshx` | Fast, collaborative terminal sharing |
 | `ngrok` | Reverse proxy for local exposure |
 | `pinggy` | SSH-based tunnel for local exposure |
+| `linpeas` | Privilege escalation enumeration tool |
+| `deepce` | Docker enumeration and exploitation tool |
 | `dropbearmulti` | SSH server/client (Dropbear) |
 
 ## 🏗️ Default Packages (Built-in)

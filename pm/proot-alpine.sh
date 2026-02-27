@@ -58,6 +58,9 @@ _install() {
         tar -xf "$_tgz" -C "$_alpine_root" || _die "Extraction failed."
         rm -f "$_tgz"
 
+        # Ensure essential directories exist
+        mkdir -p "$_alpine_root/root" "$_alpine_root/tmp"
+
         # Setup DNS inside container
         _log "Configuring DNS (resolv.conf)..."
         printf "nameserver 8.8.8.8\nnameserver 8.8.4.4\n" > "$_alpine_root/etc/resolv.conf"
@@ -85,26 +88,32 @@ _ROOT="$_alpine_root"
 _PROOT="$_proot_bin"
 
 # Fallback for SHILL_CORE if not in environment
-[ -z "$SHILL_CORE" ] && export SHILL_CORE=$(dirname "$(dirname "$(readlink -f "$0")")")
+[ -z "$SHILL_CORE" ] && export SHILL_CORE=\$(dirname "\$(dirname "\$(readlink -f "\$0")")")
 
 if [ ! -d "\$_ROOT" ]; then
     echo "❌ Alpine RootFS not found. Please reinstall."
     exit 1
 fi
 
-# Environment Reset (Avoid inheriting Shill prompt)
+# Environment Reset
 export PS1='\u@\h:\w\$ '
 export TERM=xterm-256color
 
+# Check for features in guest
+_WORK_DIR="/"
+[ -d "\$_ROOT/root" ] && _WORK_DIR="/root"
+
+_SHELL="/bin/sh"
+[ -x "\$_ROOT/bin/bash" ] && _SHELL="/bin/bash"
+
 # Note: -0 maps current user to root inside container
-# -b binds host directories for system access
 exec "\$_PROOT" \\
     -r "\$_ROOT" \\
-    -0 -w /root \\
+    -0 -w "\$_WORK_DIR" \\
     -b /dev -b /sys -b /proc \\
     -b /tmp \\
     -b "\$SHILL_CORE:/shill" \\
-    /bin/bash "\$@"
+    "\$_SHELL" "\$@"
 EOF
     chmod +x "$_alpine_wrapper"
 

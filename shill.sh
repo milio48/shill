@@ -290,6 +290,10 @@ CURLWRAP
     _log "Phase 4/5: Building busybox symlink farm..."
     _build_symlink_farm
 
+    # --- Phase 4.5: Pre-fetch package catalog ---
+    _log "Phase 4.5/5: Pre-fetching package catalog..."
+    "$_CURL" -fsSL "${SHILL_REPO}/pm/pm-ls.txt" -o "$SHILL_CORE/cache/catalog.txt" 2>/dev/null || _warn "Could not pre-fetch catalog."
+
     # --- Phase 5: Create shell config & shill wrapper ---
     _log "Phase 5/5: Generating shell config..."
     _create_rc

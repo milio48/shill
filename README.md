@@ -62,6 +62,7 @@ Packages are grouped by category for easier navigation. Install any package usin
 | `zfetch` | System & Network info fetch script |
 | `bench` | System benchmark script (by TeddySun) |
 | `yabs` | Yet Another Bench Script (VPS bench) |
+| `dufs` | A distinctive file server (web-based) |
 | `less` | Terminal pager |
 | `ag` | The Silver Searcher (fast grep) |
 | `socat` | Multipurpose relay (SOcket CAT) |

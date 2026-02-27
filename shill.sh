@@ -368,6 +368,19 @@ alias l='ls -CF'
 alias ..='cd ..'
 alias ...='cd ../..'
 
+# Command Not Found Handler
+command_not_found_handle() {
+    local cmd="$1"
+    echo "bash: $cmd: command not found"
+    if [ -f "$SHILL_CORE/cache/catalog.txt" ] && grep -q "^$cmd:" "$SHILL_CORE/cache/catalog.txt"; then
+        echo ""
+        echo "🎁 Package '$cmd' is available in Shill!"
+        echo "   Run: shill install $cmd"
+        echo ""
+    fi
+    return 127
+}
+
 # Greeting
 echo ""
 echo "  🏴‍☠️  Shill Userspace Active"
@@ -436,6 +449,7 @@ _list() {
     fi
 
     if [ -n "$_catalog" ]; then
+        echo "$_catalog" > "$SHILL_CORE/cache/catalog.txt"
         echo "$_catalog" | while IFS=: read -r _name _desc; do
             # Check if already installed
             if [ -x "$SHILL_CORE/bin/$_name" ]; then

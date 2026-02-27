@@ -9,12 +9,12 @@ Shill is a single POSIX shell script that bootstraps a **fully isolated, portabl
 Run this one-liner to download and start Shill immediately:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/milio48/shill/main/shill.sh -o shill.sh && chmod +x shill.sh && ./shill.sh
+curl -fsSL https://raw.githubusercontent.com/milio48/shill/main/shill.sh -o shill.sh && chmod +x shill.sh && ./shill.sh setup
 ```
 
 *Don't have curl? Use wget:*
 ```bash
-wget -qO shill.sh https://raw.githubusercontent.com/milio48/shill/main/shill.sh && chmod +x shill.sh && ./shill.sh
+wget -qO shill.sh https://raw.githubusercontent.com/milio48/shill/main/shill.sh && chmod +x shill.sh && ./shill.sh setup
 ```
 
 ## 📦 Package Registry

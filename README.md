@@ -54,6 +54,7 @@ Packages are grouped by category for easier navigation. Install any package usin
 | Name | Description |
 |------|-------------|
 | `tmux` | Terminal multiplexer |
+| `pm2-go` | Process manager in Go (PM2 alternative) |
 | `screen` | GNU Screen terminal multiplexer |
 | `rsync` | Fast file sync utility |
 | `less` | Terminal pager |

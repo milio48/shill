@@ -7,3 +7,4 @@ rsync:Fast file sync utility
 screen:GNU Screen terminal multiplexer
 dropbearmulti:SSH server/client (Dropbear)
 sshx:Fast, collaborative terminal sharing
+pm2-go:Process manager in Go (PM2 alternative)

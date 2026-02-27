@@ -563,7 +563,13 @@ _destroy() {
             mv "${_script_path}.tmp" "$_script_path" && \
             chmod +x "$_script_path"
 
-            _ok "Shill wiped out. No traces remain."
+            _ok "Shill wiped out. Data core deleted."
+            
+            # Self-destruct the script itself
+            _log "Self-destructing script file: $_script_path"
+            rm -f "$_script_path"
+            echo "✅ Goodbye."
+            exit 0
             ;;
         *)
             _log "Destroy cancelled."

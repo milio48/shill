@@ -1,0 +1,9 @@
+node:Node.js runtime (official LTS)
+frankenphp:FrankenPHP standalone server (PHP 8.2)
+jq:Lightweight JSON processor
+tmux:Terminal multiplexer
+socat:Multipurpose relay (SOcket CAT)
+rsync:Fast file sync utility
+screen:GNU Screen terminal multiplexer
+dropbearmulti:SSH server/client (Dropbear)
+sshx:Fast, collaborative terminal sharing

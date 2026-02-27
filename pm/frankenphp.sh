@@ -34,14 +34,6 @@ _install() {
 
     chmod +x "$_target"
 
-    # Create a convenience php alias
-    cat <<'EOF' > "$SHILL_CORE/bin/php"
-#!/bin/sh
-# FrankenPHP can act as a PHP CLI
-exec "$SHILL_CORE/bin/frankenphp" php-cli "$@"
-EOF
-    chmod +x "$SHILL_CORE/bin/php"
-
     _ok "FrankenPHP v${FRANKENPHP_VERSION} installed."
     "$SHILL_CORE/bin/frankenphp" version 2>/dev/null || true
 }
@@ -49,7 +41,6 @@ EOF
 _remove() {
     _log "Removing FrankenPHP..."
     rm -f "$SHILL_CORE/bin/frankenphp"
-    rm -f "$SHILL_CORE/bin/php"
     _ok "FrankenPHP removed."
 }
 

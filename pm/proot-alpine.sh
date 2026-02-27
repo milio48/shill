@@ -95,7 +95,12 @@ if [ ! -d "\$_ROOT" ]; then
     exit 1
 fi
 
-# Environment Reset
+# Environment Isolation (Detach from Shill ecosystem)
+export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+unset SHILL_CORE
+unset SHILL_SESSION
+
+# Environment Identity
 export PS1='\u@\h:\w\$ '
 export TERM=xterm-256color
 
@@ -112,7 +117,6 @@ exec "\$_PROOT" \\
     -0 -w "\$_WORK_DIR" \\
     -b /dev -b /sys -b /proc \\
     -b /tmp \\
-    -b "\$SHILL_CORE:/shill" \\
     "\$_SHELL" "\$@"
 EOF
     chmod +x "$_alpine_wrapper"

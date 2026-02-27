@@ -105,6 +105,11 @@ if [ ! -d "\$_ROOT" ]; then
     exit 1
 fi
 
+# Environment Isolation (Detach from Shill ecosystem)
+export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+unset SHILL_CORE
+unset SHILL_SESSION
+
 # Set Locale & Prompt
 export LANG=en_US.UTF-8
 export PS1='\u@\h:\w\$ '
@@ -117,7 +122,6 @@ exec "\$_PROOT" \\
     -0 -w /root \\
     -b /dev -b /sys -b /proc \\
     -b /tmp \\
-    -b "\$SHILL_CORE:/shill" \\
     /bin/bash "\$@"
 EOF
     chmod +x "$_ubuntu_wrapper"

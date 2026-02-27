@@ -409,6 +409,7 @@ _enter() {
     _create_rc
 
     # Replace current process with our static bash
+    SHILL_CORE="$SHILL_CORE" \
     PATH="$SHILL_CORE/bin:$SHILL_CORE/busybox_links:$PATH" \
     exec "$SHILL_CORE/bin/bash" --rcfile "$SHILL_CORE/.shill_rc"
 }
@@ -420,7 +421,9 @@ _space() {
         _die "Usage: shill.sh space <command> [args...]"
     fi
 
-    PATH="$SHILL_CORE/bin:$SHILL_CORE/busybox_links:$PATH" "$@"
+    SHILL_CORE="$SHILL_CORE" \
+    PATH="$SHILL_CORE/bin:$SHILL_CORE/busybox_links:$PATH" \
+    exec "$@"
 }
 
 _list() {

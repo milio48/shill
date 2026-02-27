@@ -84,6 +84,9 @@ _install() {
 _ROOT="$_alpine_root"
 _PROOT="$_proot_bin"
 
+# Fallback for SHILL_CORE if not in environment
+[ -z "$SHILL_CORE" ] && export SHILL_CORE=$(dirname "$(dirname "$(readlink -f "$0")")")
+
 if [ ! -d "\$_ROOT" ]; then
     echo "❌ Alpine RootFS not found. Please reinstall."
     exit 1

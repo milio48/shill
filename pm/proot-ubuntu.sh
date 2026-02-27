@@ -97,6 +97,9 @@ _install() {
 _ROOT="$_ubuntu_root"
 _PROOT="$_proot_bin"
 
+# Fallback for SHILL_CORE if not in environment
+[ -z "$SHILL_CORE" ] && export SHILL_CORE=$(dirname "$(dirname "$(readlink -f "$0")")")
+
 if [ ! -d "\$_ROOT" ]; then
     echo "❌ Ubuntu RootFS not found. Please reinstall."
     exit 1

@@ -60,6 +60,7 @@ Packages are grouped by category for easier navigation. Install any package usin
 | `screen` | GNU Screen terminal multiplexer |
 | `rsync` | Fast file sync utility |
 | `zfetch` | System & Network info fetch script |
+| `bench` | System benchmark script (by TeddySun) |
 | `less` | Terminal pager |
 | `ag` | The Silver Searcher (fast grep) |
 | `socat` | Multipurpose relay (SOcket CAT) |

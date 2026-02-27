@@ -24,23 +24,38 @@ _install() {
     esac
 
     _url="https://github.com/dunstorm/pm2-go/releases/download/v${PM2_GO_VERSION}/pm2-go_linux_${_arch}"
-    _target="$SHILL_CORE/bin/pm2-go"
+    _bin_real="$SHILL_CORE/bin/pm2-go.bin"
+    _wrapper="$SHILL_CORE/bin/pm2-go"
+    _pm2_home="$SHILL_CORE/etc/.pm2-go"
 
     _log "Installing PM2-GO v${PM2_GO_VERSION} (${_arch})..."
 
-    # Download
+    # 1. Download binary to .bin
     _log "Downloading from GitHub Releases..."
-    curl -fsSL "$_url" -o "$_target" || _die "Download failed. Check version or architecture."
+    curl -fsSL "$_url" -o "$_bin_real" || _die "Download failed."
+    chmod +x "$_bin_real"
 
-    chmod +x "$_target"
+    # 2. Prepare HOME directory
+    mkdir -p "$_pm2_home"
 
-    _ok "PM2-GO installed successfully."
-    "$_target" --version 2>/dev/null || true
+    # 3. Create Wrapper
+    _log "Creating wrapper script..."
+    cat <<EOF > "$_wrapper"
+#!/bin/sh
+# pm2-go wrapper for Shill
+export PM2_HOME="$_pm2_home"
+exec "\$SHILL_CORE/bin/pm2-go.bin" "\$@"
+EOF
+    chmod +x "$_wrapper"
+
+    _ok "PM2-GO installed successfully (HOME isolated to etc/.pm2-go)."
+    "$_wrapper" version 2>/dev/null || true
 }
 
 _remove() {
     _log "Removing PM2-GO..."
-    rm -f "$SHILL_CORE/bin/pm2-go"
+    rm -f "$SHILL_CORE/bin/pm2-go" "$SHILL_CORE/bin/pm2-go.bin"
+    rm -rf "$SHILL_CORE/etc/.pm2-go"
     _ok "PM2-GO removed."
 }
 

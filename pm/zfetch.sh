@@ -162,9 +162,9 @@ if [ -n "$PORT_LIST" ] && [ -r /etc/services ]; then
     while read -r port; do
         SERVICE_NAME=$(awk -v p="$port" '$2 == p"/tcp" {print $1; exit}' /etc/services 2>/dev/null)
         if [ -z "$SERVICE_NAME" ]; then PORTS_FORMATTED="$PORTS_FORMATTED$port, "; else PORTS_FORMATTED="$PORTS_FORMATTED$port ($SERVICE_NAME), "; fi
-    done <<EOF
+    done <<PORT_EOF
 $PORT_LIST
-EOF
+PORT_EOF
     PORTS_FORMATTED=$(echo "$PORTS_FORMATTED" | sed 's/, $//')
 elif [ -n "$PORT_LIST" ]; then
     # Paste equivalent

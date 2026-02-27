@@ -573,7 +573,7 @@ _destroy() {
 
 _version() {
     echo "shill v1.0.0 — Portable Standarized Userspace"
-    echo "https://github.com/<OWNER>/shill"
+    echo "https://github.com/milio48/shill"
 }
 
 _help() {

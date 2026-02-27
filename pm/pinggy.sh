@@ -19,21 +19,46 @@ _install() {
     cat <<'EOF' > "$_target"
 #!/bin/sh
 # Pinggy.io tunnel wrapper for Shill
-# Usage: pinggy [port]
+# Usage: 
+#   pinggy <port>          (default http)
+#   pinggy <proto> <port>  (e.g. pinggy tcp 8081)
 
-PORT=${1:-8080}
+_print_help() {
+    echo "Usage: pinggy [protocol] <port>"
+    echo ""
+    echo "Protocols: http (default), tcp, tls"
+    echo "Example: pinggy tcp 8081"
+    exit 0
+}
+
+PROTO="http"
+PORT=""
+
+case "$1" in
+    "") _print_help ;;
+    help|--help|-h) _print_help ;;
+    http|tcp|tls) PROTO="$1"; PORT="$2" ;;
+    [0-9]*) PORT="$1" ;;
+    *) echo "❌ Unknown argument: $1"; exit 1 ;;
+esac
+
+[ -z "$PORT" ] && PORT="8080"
+
+if [ "$PROTO" = "http" ]; then
+    SSH_USER="qr"
+else
+    SSH_USER="qr+$PROTO"
+fi
 
 if command -v ssh >/dev/null 2>&1; then
-    echo "🚀 tunnel Pinggy on port: $PORT"
+    echo "🚀 Tunneling $PROTO on port: $PORT"
     exec ssh -t -p 443 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
-        -R 0:127.0.0.1:$PORT qr@free.pinggy.io
+        -R 0:127.0.0.1:$PORT "$SSH_USER@free.pinggy.io"
 elif command -v dbclient >/dev/null 2>&1; then
-    echo "🚀 tunnel Pinggy (via Dropbear) on port: $PORT"
-    # Dropbear dbclient -R format
-    exec dbclient -y -p 443 -R 0:127.0.0.1:$PORT qr@free.pinggy.io
+    echo "🚀 Tunneling $PROTO (via Dropbear) on port: $PORT"
+    exec dbclient -y -p 443 -R 0:127.0.0.1:$PORT "$SSH_USER@free.pinggy.io"
 else
-        echo "❌ Error: ssh (OpenSSH) or dbclient (Dropbear) not found."
-        echo "💡 Tip: Run './shill.sh install dropbearmulti' first."
+    echo "❌ Error: ssh or dbclient not found."
     exit 1
 fi
 EOF

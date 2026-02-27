@@ -67,13 +67,18 @@ _install() {
         _log "Configuring DNS (resolv.conf)..."
         printf "nameserver 8.8.8.8\nnameserver 8.8.4.4\n" > "$_ubuntu_root/etc/resolv.conf"
 
-        # --- Fine-tuning (Locales & Cleanup) ---
+        # --- Fine-tuning (GPG Fix, Locales & Cleanup) ---
         _log "Fine-tuning system (Locale & Cleanup)..."
-        # We run this via PRoot to initialize the environment properly
+        # We run this via PRoot to initialize the environment properly.
+        # Note: We use -o Acquire::AllowInsecureRepositories=true for the first update 
+        # to fix missing GPG keys in the base image.
         "$_proot_bin" -r "$_ubuntu_root" -0 -b /dev -b /sys -b /proc /bin/sh -c "
-            apt update && apt install -y locales && 
+            apt-get update -o Acquire::AllowInsecureRepositories=true && 
+            apt-get install -y --allow-unauthenticated ubuntu-keyring &&
+            apt-get update &&
+            apt-get install -y locales && 
             locale-gen en_US.UTF-8 && 
-            apt clean && 
+            apt-get clean && 
             rm -rf /var/lib/apt/lists/*
         " || _log "⚠️ Fine-tuning failed (non-critical). You can fix locales later."
     else

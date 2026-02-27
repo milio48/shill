@@ -1,2 +1,12 @@
-# Auto detect text files and perform LF normalization
-* text=auto
+# Enforce LF line endings for all text files
+# This prevents "command not found" errors in Linux environments
+* text=auto eol=lf
+
+# Explicitly ensure shell scripts always use LF
+*.sh text eol=lf
+
+# Documentation and config
+*.md text eol=lf
+*.txt text eol=lf
+.gitignore text eol=lf
+.gitattributes text eol=lf

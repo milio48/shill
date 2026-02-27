@@ -89,6 +89,10 @@ if [ ! -d "\$_ROOT" ]; then
     exit 1
 fi
 
+# Environment Reset (Avoid inheriting Shill prompt)
+export PS1='\u@\h:\w\$ '
+export TERM=xterm-256color
+
 # Note: -0 maps current user to root inside container
 # -b binds host directories for system access
 exec "\$_PROOT" \\

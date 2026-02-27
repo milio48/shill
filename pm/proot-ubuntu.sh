@@ -6,7 +6,6 @@
 
 set -e
 
-UBUNTU_VERSION="24.04.1"
 
 _log()  { printf '[shill:proot-ubuntu] %s\n' "$*"; }
 _die()  { printf '[shill:proot-ubuntu] ❌ %s\n' "$*" >&2; exit 1; }
@@ -29,7 +28,15 @@ _install() {
         *)              _die "Unsupported architecture: $_arch_raw" ;;
     esac
 
-    _rootfs_url="http://cdimage.ubuntu.com/ubuntu-base/releases/24.04/release/ubuntu-base-${UBUNTU_VERSION}-base-${_ubuntu_arch}.tar.gz"
+    # Dynamic version detection for 24.04 (Noble) latest point release
+    _release_url="http://cdimage.ubuntu.com/ubuntu-base/releases/24.04/release/"
+    _log "Detecting latest Ubuntu 24.04 point release..."
+    UBUNTU_VERSION=$(curl -fsSL "$_release_url/SHA256SUMS" | grep -o "ubuntu-base-24\.04\.[0-9]-base-${_ubuntu_arch}.tar.gz" | head -n 1 | cut -d- -f3)
+    
+    [ -z "$UBUNTU_VERSION" ] && _die "Could not detect latest Ubuntu version."
+    _log "Latest version detected: $UBUNTU_VERSION"
+
+    _rootfs_url="${_release_url}ubuntu-base-${UBUNTU_VERSION}-base-${_ubuntu_arch}.tar.gz"
     _lib_dir="$SHILL_CORE/lib"
     _ubuntu_root="$_lib_dir/proot-ubuntu"
     _cache="$SHILL_CORE/cache"

@@ -59,6 +59,7 @@ Packages are grouped by category for easier navigation. Install any package usin
 | `pm2-go` | Process manager in Go (PM2 alternative) |
 | `screen` | GNU Screen terminal multiplexer |
 | `rsync` | Fast file sync utility |
+| `zfetch` | System & Network info fetch script |
 | `less` | Terminal pager |
 | `ag` | The Silver Searcher (fast grep) |
 | `socat` | Multipurpose relay (SOcket CAT) |

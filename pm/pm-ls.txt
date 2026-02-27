@@ -14,3 +14,4 @@ linpeas:Privilege escalation enumeration tool
 deepce:Docker enumeration and exploitation tool
 webi:WebInstall (webinstall.dev) manager
 php:Static PHP CLI binary (from static-php.dev)
+zfetch:System & Network info fetch script

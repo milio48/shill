@@ -43,8 +43,14 @@ _install() {
     cat <<EOF > "$_wrapper"
 #!/bin/sh
 # pm2-go wrapper for Shill
+
+# Ensure directories exist
+mkdir -p "\$SHILL_CORE/etc/.pm2-go/logs" "\$SHILL_CORE/etc/.pm2-go/pids"
+
+# Isolation
 export HOME="\$SHILL_CORE/etc"
-export PM2_HOME="$_pm2_home"
+export PM2_HOME="\$SHILL_CORE/etc/.pm2-go"
+
 exec "\$SHILL_CORE/bin/pm2-go.bin" "\$@"
 EOF
     chmod +x "$_wrapper"

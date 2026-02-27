@@ -82,6 +82,7 @@ Packages are grouped by category for easier navigation. Install any package usin
 | Name | Description |
 |------|-------------|
 | `proot-ubuntu` | Lightweight Ubuntu 24.04 (via PRoot) |
+| `proot-alpine` | Ultra-lightweight Alpine Linux (via PRoot) |
 
 ## 🏗️ Default Packages (Built-in)
 

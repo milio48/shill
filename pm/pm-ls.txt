@@ -18,3 +18,4 @@ zfetch:System & Network info fetch script
 bench:System benchmark script (by TeddySun)
 yabs:Yet Another Bench Script (comprehensive VPS bench)
 dufs:A distinctive file server (static binary)
+python:Portable Python 3.13 (standalone musl build)

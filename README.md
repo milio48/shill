@@ -46,6 +46,7 @@ Packages are grouped by category for easier navigation. Install any package usin
 | Name | Description |
 |------|-------------|
 | `node` | Node.js runtime (official LTS) with npm & npx |
+| `python` | Portable Python 3.13 (standalone musl build) |
 | `frankenphp` | FrankenPHP standalone server (PHP 8.2) |
 | `php` | Static PHP CLI binary (from static-php.dev) |
 | `webi` | WebInstall (webinstall.dev) manager |

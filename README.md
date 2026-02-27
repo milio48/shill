@@ -66,6 +66,7 @@ Packages are grouped by category for easier navigation. Install any package usin
 |------|-------------|
 | `sshx` | Fast, collaborative terminal sharing |
 | `ngrok` | Reverse proxy for local exposure |
+| `pinggy` | SSH-based tunnel for local exposure |
 | `dropbearmulti` | SSH server/client (Dropbear) |
 
 ## 🏗️ Default Packages (Built-in)

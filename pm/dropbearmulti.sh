@@ -26,13 +26,20 @@ _install() {
     curl -fsSL "$_url" -o "$_target" || _die "Download failed."
     chmod +x "$_target"
 
-    _ok "dropbearmulti installed."
+    # Create applet symlinks
+    for _applet in dbclient dropbearkey dropbearconvert dropbear; do
+        ln -sf "dropbearmulti" "$SHILL_CORE/bin/$_applet"
+    done
+
+    _ok "dropbearmulti installed (with symlinks: dbclient, dropbearkey, etc.)."
     "$SHILL_CORE/bin/dropbearmulti" --version 2>/dev/null || true
 }
 
 _remove() {
     _log "Removing dropbearmulti..."
     rm -f "$SHILL_CORE/bin/dropbearmulti"
+    rm -f "$SHILL_CORE/bin/dbclient" "$SHILL_CORE/bin/dropbearkey" \
+          "$SHILL_CORE/bin/dropbearconvert" "$SHILL_CORE/bin/dropbear"
     _ok "dropbearmulti removed."
 }
 

@@ -350,6 +350,7 @@ export PATH="$SHILL_CORE/bin:$SHILL_CORE/busybox_links:\$PATH"
 export HISTFILE="$SHILL_CORE/.shill_history"
 export HISTSIZE=5000
 export HISTFILESIZE=10000
+export SHILL_SESSION=1
 RCEOF
 
     # PS1 and aliases (no expansion needed)
@@ -583,6 +584,12 @@ _destroy() {
             _log "Self-destructing script file: $_script_path"
             rm -f "$_script_path"
             echo "✅ Goodbye."
+
+            # If inside a shill session, kill the parent shell
+            if [ "$SHILL_SESSION" = "1" ]; then
+                kill -HUP $PPID 2>/dev/null || true
+            fi
+
             exit 0
             ;;
         *)

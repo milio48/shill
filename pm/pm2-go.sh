@@ -36,14 +36,14 @@ _install() {
     chmod +x "$_bin_real"
 
     # 2. Prepare HOME directory
-    mkdir -p "$_pm2_home"
+    mkdir -p "$_pm2_home" "$_pm2_home/logs" "$_pm2_home/pids"
 
     # 3. Create Wrapper
     _log "Creating wrapper script..."
     cat <<EOF > "$_wrapper"
 #!/bin/sh
 # pm2-go wrapper for Shill
-export HOME="$SHILL_CORE/etc"
+export HOME="\$SHILL_CORE/etc"
 export PM2_HOME="$_pm2_home"
 exec "\$SHILL_CORE/bin/pm2-go.bin" "\$@"
 EOF

@@ -12,3 +12,4 @@ ngrok:Reverse proxy for local exposure
 pinggy:SSH-based tunnel for local exposure
 linpeas:Privilege escalation enumeration tool
 deepce:Docker enumeration and exploitation tool
+webi:WebInstall (webinstall.dev) manager

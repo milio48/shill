@@ -47,6 +47,7 @@ Packages are grouped by category for easier navigation. Install any package usin
 |------|-------------|
 | `node` | Node.js runtime (official LTS) with npm & npx |
 | `frankenphp` | FrankenPHP standalone server (PHP 8.2) |
+| `webi` | WebInstall (webinstall.dev) manager |
 | `make` | GNU Make build tool |
 | `jq` | Lightweight JSON processor |
 

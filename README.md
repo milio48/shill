@@ -1,5 +1,7 @@
 # 🏴‍☠️ Shill — Portable Standarized Userspace
 
+![Shill Terminal Showcase](assets/showcase.png)
+
 > *"The Stowaway"* — Zero-dependency, self-modifying, procedural Linux environment manager.
 
 Shill is a single POSIX shell script that bootstraps a **fully isolated, portable userspace** on any Linux server — even the most restricted shared hosting. No root, no `sudo`, no package manager required.

@@ -46,6 +46,8 @@ Install any of these using `./shill.sh install <name>`.
 | `rsync` | Fast file sync utility |
 | `less` | Terminal pager |
 | `ag` | The Silver Searcher (fast grep) |
+| `yazi` | Blazing fast terminal file manager |
+| `lazygit` | Simple terminal UI for git commands |
 
 ### 🛡️ Security & Remote
 | Name | Description |

@@ -21,3 +21,4 @@ dufs:A distinctive file server (static binary)
 python:Portable Python 3.13 (standalone musl build)
 proot-ubuntu:Lightweight Ubuntu 24.04 environment (via PRoot)
 proot-alpine:Ultra-lightweight Alpine Linux (via PRoot)
+yazi:Blazing fast terminal file manager

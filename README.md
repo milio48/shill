@@ -48,6 +48,7 @@ Install any of these using `./shill.sh install <name>`.
 | `yazi` | Blazing fast terminal file manager |
 | `lazygit` | Simple terminal UI for git commands |
 | `fastfetch` | Like neofetch, but much faster (C) |
+| `btop` | A monitor of resources |
 
 ### 🛡️ Security & Remote
 | Name | Description |

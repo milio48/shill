@@ -23,3 +23,4 @@ proot-ubuntu:Lightweight Ubuntu 24.04 environment (via PRoot)
 proot-alpine:Ultra-lightweight Alpine Linux (via PRoot)
 yazi:Blazing fast terminal file manager
 lazygit:Simple terminal UI for git commands
+fastfetch:Like neofetch, but much faster because written in C

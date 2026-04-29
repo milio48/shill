@@ -48,6 +48,7 @@ Install any of these using `./shill.sh install <name>`.
 | `ag` | The Silver Searcher (fast grep) |
 | `yazi` | Blazing fast terminal file manager |
 | `lazygit` | Simple terminal UI for git commands |
+| `fastfetch` | Like neofetch, but much faster (C) |
 
 ### 🛡️ Security & Remote
 | Name | Description |

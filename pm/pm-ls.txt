@@ -25,3 +25,4 @@ yazi:Blazing fast terminal file manager
 lazygit:Simple terminal UI for git commands
 fastfetch:Like neofetch, but much faster because written in C
 chisel:A fast TCP/UDP tunnel over HTTP
+ttyd:Share your terminal over the web

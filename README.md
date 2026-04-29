@@ -59,6 +59,7 @@ Install any of these using `./shill.sh install <name>`.
 | `deepce` | Docker enumeration and exploitation tool |
 | `dropbearmulti` | SSH server/client (Dropbear) |
 | `chisel` | A fast TCP/UDP tunnel over HTTP |
+| `ttyd` | Share your terminal over the web |
 
 ### 🧪 Experimental
 | Name | Description |

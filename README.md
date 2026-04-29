@@ -31,7 +31,6 @@ Install any of these using `./shill.sh install <name>`.
 | `frankenphp` | FrankenPHP standalone server (PHP 8.2) |
 | `php` | Static PHP CLI binary (v8.3) |
 | `webi` | WebInstall (webinstall.dev) manager |
-| `make` | GNU Make build tool |
 | `jq` | Lightweight JSON processor |
 
 ### 🔧 Utilities
@@ -44,8 +43,8 @@ Install any of these using `./shill.sh install <name>`.
 | `yabs` | Yet Another Bench Script (VPS bench) |
 | `dufs` | A distinctive file server (static binary) |
 | `rsync` | Fast file sync utility |
-| `less` | Terminal pager |
-| `ag` | The Silver Searcher (fast grep) |
+| `socat` | Multipurpose relay (SOcket CAT) |
+| `screen` | GNU Screen terminal multiplexer |
 | `yazi` | Blazing fast terminal file manager |
 | `lazygit` | Simple terminal UI for git commands |
 | `fastfetch` | Like neofetch, but much faster (C) |

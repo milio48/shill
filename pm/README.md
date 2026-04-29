@@ -31,10 +31,13 @@ All packages installed through Shill **MUST** be portable, standalone binaries. 
 
 ## Registry
 
-If you create a new PM script, you MUST register it in `pm-ls.txt` using the format:
-```text
-package_name:Short description of the package
-```
+If you create a new PM script, you MUST perform two registry updates:
+
+1. **Update `pm-ls.txt`**: Add the package using the format:
+   ```text
+   package_name:Short description of the package
+   ```
+2. **Update Root `README.md`**: You MUST also check and integrate the new package into the root `README.md` file under the `## 📦 Package Registry` section. Classify it under the appropriate category (e.g., Developer Tools, Utilities, Security) and add a row to the markdown table.
 
 ## Starter Kit / Boilerplate
 

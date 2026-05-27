@@ -49,7 +49,7 @@ Install any of these using `./shill.sh install <name>`.
 | `lazygit` | Simple terminal UI for git commands |
 | `fastfetch` | Like neofetch, but much faster (C) |
 | `btop` | A monitor of resources |
-
+| `zellij` | Terminal workspace with batteries included |
 ### 🛡️ Security & Remote
 | Name | Description |
 |------|-------------|

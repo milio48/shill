@@ -41,6 +41,23 @@ _install() {
     # Cleanup
     rm -f "$_tmp_tar"
 
+    # Optimization for Development: Install Composer
+    _log "Installing Composer (PHP Dependency Manager)..."
+    if curl -fsSL "https://getcomposer.org/composer-stable.phar" -o "$SHILL_CORE/bin/composer"; then
+        chmod +x "$SHILL_CORE/bin/composer"
+        _ok "Composer installed."
+    else
+        _log "Note: Could not install Composer."
+    fi
+
+    # Optimization for Development: Create php.ini if not exists
+    _log "Configuring PHP for development..."
+    if [ ! -f "$SHILL_CORE/bin/php.ini" ]; then
+        echo "memory_limit=-1" > "$SHILL_CORE/bin/php.ini"
+        echo "display_errors=On" >> "$SHILL_CORE/bin/php.ini"
+        echo "error_reporting=E_ALL" >> "$SHILL_CORE/bin/php.ini"
+    fi
+
     _ok "Static PHP installed successfully at $SHILL_CORE/bin/php"
     "$_target" -v | head -n 1
 }
@@ -48,6 +65,7 @@ _install() {
 _remove() {
     _log "Removing Static PHP..."
     rm -f "$SHILL_CORE/bin/php"
+    rm -f "$SHILL_CORE/bin/composer"
     _ok "Static PHP removed."
 }
 

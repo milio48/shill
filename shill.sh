@@ -386,6 +386,13 @@ command_not_found_handle() {
     return 127
 }
 
+# Source package-specific profiles (for PATH injections, aliases, etc.)
+if [ -d "$SHILL_CORE/etc/profile.d" ]; then
+    for _prof in "$SHILL_CORE/etc/profile.d"/*.sh; do
+        [ -r "$_prof" ] && . "$_prof"
+    done
+fi
+
 # Greeting
 echo ""
 echo "  🏴‍☠️  Shill Userspace Active"

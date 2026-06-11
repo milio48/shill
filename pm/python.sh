@@ -62,6 +62,22 @@ _install() {
     # Cleanup
     rm -f "$_tgz"
 
+    # Optimization for Development: Install `uv` (ultra-fast pip/venv replacement)
+    _log "Installing uv (Fast Python Package Manager)..."
+    _uv_url="https://github.com/astral-sh/uv/releases/latest/download/uv-${_target}.tar.gz"
+    if curl -fsSL "$_uv_url" -o "$_cache/uv.tar.gz"; then
+        tar -xzf "$_cache/uv.tar.gz" -C "$SHILL_CORE/bin" --strip-components=1 "uv-${_target}/uv" "uv-${_target}/uvx" 2>/dev/null || \
+        tar -xzf "$_cache/uv.tar.gz" -C "$SHILL_CORE/bin" --strip-components=1 "uv" "uvx" 2>/dev/null || true
+        rm -f "$_cache/uv.tar.gz"
+        _ok "uv and uvx installed to bin/"
+    else
+        _log "Note: Could not download uv."
+    fi
+
+    # Create a profile hook so that pip global binaries are in PATH
+    mkdir -p "$SHILL_CORE/etc/profile.d"
+    echo 'export PATH="$SHILL_CORE/lib/python/bin:$PATH"' > "$SHILL_CORE/etc/profile.d/python.sh"
+
     _ok "Python installed successfully."
     "$SHILL_CORE/bin/python3" --version
 }

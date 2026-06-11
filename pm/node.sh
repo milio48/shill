@@ -55,25 +55,20 @@ _install() {
     cp "$_extract/bin/node" "$SHILL_CORE/bin/node"
     chmod +x "$SHILL_CORE/bin/node"
 
-    # Install npm (optional, as a shell script wrapper it needs node)
     if [ -f "$_extract/bin/npm" ]; then
         # Copy the entire lib/node_modules to SHILL_CORE
         mkdir -p "$SHILL_CORE/lib"
         cp -r "$_extract/lib/node_modules" "$SHILL_CORE/lib/"
         
-        # Create npm wrapper
-        cat <<'EOF' > "$SHILL_CORE/bin/npm"
-#!/bin/sh
-exec "$SHILL_CORE/bin/node" "$SHILL_CORE/lib/node_modules/npm/bin/npm-cli.js" "$@"
-EOF
-        chmod +x "$SHILL_CORE/bin/npm"
+        # Create standard symlinks for npm and npx (better compatibility than shell wrappers)
+        ln -sf "../lib/node_modules/npm/bin/npm-cli.js" "$SHILL_CORE/bin/npm"
+        ln -sf "../lib/node_modules/npm/bin/npx-cli.js" "$SHILL_CORE/bin/npx"
 
-        # Create npx wrapper
-        cat <<'EOF' > "$SHILL_CORE/bin/npx"
-#!/bin/sh
-exec "$SHILL_CORE/bin/node" "$SHILL_CORE/lib/node_modules/npm/bin/npx-cli.js" "$@"
-EOF
-        chmod +x "$SHILL_CORE/bin/npx"
+        # Enable Corepack (Yarn, PNPM support out of the box)
+        if [ -f "$SHILL_CORE/lib/node_modules/corepack/dist/corepack.js" ]; then
+            ln -sf "../lib/node_modules/corepack/dist/corepack.js" "$SHILL_CORE/bin/corepack"
+            "$SHILL_CORE/bin/node" "$SHILL_CORE/bin/corepack" enable --install-directory "$SHILL_CORE/bin"
+        fi
     fi
 
     # Cleanup

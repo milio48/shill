@@ -32,7 +32,8 @@ Install any of these using `./shill.sh install <name>`.
 | `php` | Static PHP CLI binary (v8.3) |
 | `webi` | WebInstall (webinstall.dev) manager |
 | `jq` | Lightweight JSON processor |
-
+| `micro` | Modern and intuitive terminal text editor |
+| `sqlite3` | Static SQLite3 command-line interface |
 ### 🔧 Utilities
 | Name | Description |
 |------|-------------|

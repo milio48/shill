@@ -28,3 +28,5 @@ chisel:A fast TCP/UDP tunnel over HTTP
 ttyd:Share your terminal over the web
 btop:A monitor of resources
 zellij:Terminal workspace with batteries included
+micro:A modern and intuitive terminal-based text editor
+sqlite3:Static SQLite3 command-line interface

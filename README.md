@@ -41,7 +41,7 @@ Install any of these using `./shill.sh install <name>`.
 | Name | Description |
 |------|-------------|
 | `tmux` | Terminal multiplexer |
-| `pm2-go` | Process manager in Go (PM2 alternative) |
+| `pm2-go` | Process manager in Go (PM2 alternative, incl. `pm2-go-web`) |
 | `zfetch` | System & Network info fetch script |
 | `bench` | System benchmark script (by TeddySun) |
 | `yabs` | Yet Another Bench Script (VPS bench) |

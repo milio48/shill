@@ -1,7 +1,9 @@
 #!/bin/sh
 # ==============================================================================
 # Shill PM Installer: PM2-GO
-# Downloads pm2-go binary from GitHub Releases
+# Downloads the pm2-go binary (classic CLI) AND the pm2-go-web variant
+# (CLI + web dashboard) from GitHub Releases.
+# Installed to: $SHILL_CORE/bin/pm2-go and $SHILL_CORE/bin/pm2-go-web
 # ==============================================================================
 
 set -e
@@ -14,6 +16,23 @@ _ok()   { printf '[shill:pm2-go] ✅ %s\n' "$*"; }
 
 [ -z "$SHILL_CORE" ] && _die "SHILL_CORE is not set."
 
+# Build a wrapper that isolates HOME/PM2_HOME inside Shill.
+# $1 = wrapper path, $2 = absolute path to the real binary
+_make_wrapper() {
+    cat <<EOF > "$1"
+#!/bin/sh
+# pm2-go wrapper for Shill (isolates HOME/PM2_HOME)
+
+mkdir -p "\$SHILL_CORE/etc/.pm2-go/logs" "\$SHILL_CORE/etc/.pm2-go/pids"
+
+export HOME="\$SHILL_CORE/etc"
+export PM2_HOME="\$SHILL_CORE/etc/.pm2-go"
+
+exec "$2" "\$@"
+EOF
+    chmod +x "$1"
+}
+
 _install() {
     # Detect architecture
     case "$(uname -m)" in
@@ -23,45 +42,50 @@ _install() {
         *)              _die "Unsupported architecture: $(uname -m)" ;;
     esac
 
-    _url="https://github.com/dunstorm/pm2-go/releases/download/v${PM2_GO_VERSION}/pm2-go_linux_${_arch}"
+    _base="https://github.com/dunstorm/pm2-go/releases/download/v${PM2_GO_VERSION}"
     _bin_real="$SHILL_CORE/bin/pm2-go.bin"
-    _wrapper="$SHILL_CORE/bin/pm2-go"
+    _bin_web="$SHILL_CORE/bin/pm2-go-web.bin"
     _pm2_home="$SHILL_CORE/etc/.pm2-go"
 
     _log "Installing PM2-GO v${PM2_GO_VERSION} (${_arch})..."
 
-    # 1. Download binary to .bin
-    _log "Downloading from GitHub Releases..."
-    curl -fsSL "$_url" -o "$_bin_real" || _die "Download failed."
+    # 1. Classic binary (required)
+    _log "Downloading pm2-go..."
+    curl -fsSL "${_base}/pm2-go_linux_${_arch}" -o "$_bin_real" || _die "Download failed."
     chmod +x "$_bin_real"
 
-    # 2. Prepare HOME directory
+    # 2. Web variant (optional, same arch set)
+    _web=0
+    _log "Downloading pm2-go-web..."
+    if curl -fsSL "${_base}/pm2-go-web_linux_${_arch}" -o "$_bin_web"; then
+        chmod +x "$_bin_web"
+        _web=1
+    else
+        rm -f "$_bin_web"
+        _log "Note: pm2-go-web not available for ${_arch}."
+    fi
+
+    # 3. Prepare HOME directory
     mkdir -p "$_pm2_home" "$_pm2_home/logs" "$_pm2_home/pids"
 
-    # 3. Create Wrapper
-    _log "Creating wrapper script..."
-    cat <<EOF > "$_wrapper"
-#!/bin/sh
-# pm2-go wrapper for Shill
+    # 4. Create wrappers
+    _log "Creating wrappers..."
+    _make_wrapper "$SHILL_CORE/bin/pm2-go" "$_bin_real"
+    if [ "$_web" -eq 1 ]; then
+        _make_wrapper "$SHILL_CORE/bin/pm2-go-web" "$_bin_web"
+    fi
 
-# Ensure directories exist
-mkdir -p "\$SHILL_CORE/etc/.pm2-go/logs" "\$SHILL_CORE/etc/.pm2-go/pids"
-
-# Isolation
-export HOME="\$SHILL_CORE/etc"
-export PM2_HOME="\$SHILL_CORE/etc/.pm2-go"
-
-exec "\$SHILL_CORE/bin/pm2-go.bin" "\$@"
-EOF
-    chmod +x "$_wrapper"
-
-    _ok "PM2-GO installed successfully (HOME isolated to etc/.pm2-go)."
-    "$_wrapper" version 2>/dev/null || true
+    _ok "PM2-GO v${PM2_GO_VERSION} installed (HOME isolated to etc/.pm2-go)."
+    _log "Available commands:"
+    _log "  pm2-go      - Classic CLI"
+    [ "$_web" -eq 1 ] && _log "  pm2-go-web  - CLI + web dashboard"
+    "$SHILL_CORE/bin/pm2-go" version 2>/dev/null || true
 }
 
 _remove() {
     _log "Removing PM2-GO..."
     rm -f "$SHILL_CORE/bin/pm2-go" "$SHILL_CORE/bin/pm2-go.bin"
+    rm -f "$SHILL_CORE/bin/pm2-go-web" "$SHILL_CORE/bin/pm2-go-web.bin"
     rm -rf "$SHILL_CORE/etc/.pm2-go"
     _ok "PM2-GO removed."
 }

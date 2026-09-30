@@ -1,8 +1,8 @@
 #!/bin/sh
 # ==============================================================================
 # Shill PM Installer: git (static, relocatable)
-# Static git from supriyo-biswas/static-builds. Built with RUNTIME_PREFIX so it
-# runs from any location; no libc/root needed.
+# Built by our own CI in milio48/static-builds (fork of supriyo-biswas).
+# RUNTIME_PREFIX build, so it runs from any location; no libc/root needed.
 # Installed to: $SHILL_CORE/lib/git  (symlinked as $SHILL_CORE/bin/git)
 # ==============================================================================
 
@@ -10,11 +10,11 @@ set -e
 
 GIT_VERSION="2.55.0"
 
-# SHA-256 of the release assets (from the GitHub API 'digest' field).
-# Pinning the exact bytes means a swapped/tampered artifact is detected even
-# though the upstream build is a third-party project.
-GIT_SHA256_X86_64="6f8242b13e1ff00af0ac6dc4db013e4a19c9a4bd0878f8bc734239e1ca2d1b59"
-GIT_SHA256_AARCH64="76bf667f94d6e591bbb2732197224f1fd78d71e5de8ad5d5b4ce40ba987cef83"
+# SHA-256 of the release assets, cross-checked against the release's own
+# checksums.txt. Pinning the exact bytes means a swapped/tampered artifact is
+# rejected at install time.
+GIT_SHA256_X86_64="da899acd7ab131239c1f6387597af698966d4d541e329bddcd3c300404bfcde3"
+GIT_SHA256_AARCH64="a8ed632587ef6f2bc6be27dc0a3b01f9635af4e4f91e785fb5dcba902814e143"
 
 _log()  { printf '[shill:git] %s\n' "$*"; }
 _die()  { printf '[shill:git] ❌ %s\n' "$*" >&2; exit 1; }
@@ -64,7 +64,7 @@ _install() {
     esac
 
     _file="git-${GIT_VERSION}-linux-${_arch}.tar.gz"
-    _url="https://github.com/supriyo-biswas/static-builds/releases/download/git-${GIT_VERSION}/${_file}"
+    _url="https://github.com/milio48/static-builds/releases/download/git-${GIT_VERSION}/${_file}"
     _cache="$SHILL_CORE/cache"
     _git_root="$SHILL_CORE/lib/git"
 

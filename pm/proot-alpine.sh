@@ -1,7 +1,9 @@
 #!/bin/sh
 # ==============================================================================
 # Shill PM Installer: Alpine Linux (via PRoot)
-# Sets up a lightweight Alpine Linux environment without root privileges.
+# Sets up a lightweight Alpine environment without root privileges.
+# The wrapper keeps the current directory visible and exposes `add`/`update`
+# pass-through commands so it feels like a native shell.
 # ==============================================================================
 
 set -e
@@ -18,12 +20,12 @@ _install() {
     # Detect architecture
     _arch_raw=$(uname -m)
     case "$_arch_raw" in
-        x86_64|amd64)   
-            _alpine_arch="x86_64" 
+        x86_64|amd64)
+            _alpine_arch="x86_64"
             _proot_url="https://proot.gitlab.io/proot/bin/proot"
             ;;
-        aarch64|arm64)  
-            _alpine_arch="aarch64" 
+        aarch64|arm64)
+            _alpine_arch="aarch64"
             _proot_url="https://github.com/proot-me/proot-static-builds/raw/master/bin/proot-arm64"
             ;;
         *)              _die "Unsupported architecture: $_arch_raw" ;;
@@ -31,7 +33,7 @@ _install() {
 
     _v_major_minor=$(echo "$ALPINE_VERSION" | cut -d. -f1,2)
     _rootfs_url="https://dl-cdn.alpinelinux.org/alpine/v${_v_major_minor}/releases/${_alpine_arch}/alpine-minirootfs-${ALPINE_VERSION}-${_alpine_arch}.tar.gz"
-    
+
     _lib_dir="$SHILL_CORE/lib"
     _alpine_root="$_lib_dir/proot-alpine"
     _cache="$SHILL_CORE/cache"
@@ -52,7 +54,7 @@ _install() {
     if [ ! -d "$_alpine_root" ]; then
         _log "Downloading Alpine RootFS (approx 3MB)..."
         curl -fsSL "$_rootfs_url" -o "$_tgz" || _die "RootFS download failed."
-        
+
         _log "Extracting RootFS to lib/proot-alpine..."
         mkdir -p "$_alpine_root"
         tar -xf "$_tgz" -C "$_alpine_root" || _die "Extraction failed."
@@ -61,17 +63,21 @@ _install() {
         # Ensure essential directories exist
         mkdir -p "$_alpine_root/root" "$_alpine_root/tmp"
 
-        # Setup DNS inside container
+        # DNS: mirror the host so package installs work during setup
         _log "Configuring DNS (resolv.conf)..."
-        printf "nameserver 8.8.8.8\nnameserver 8.8.4.4\n" > "$_alpine_root/etc/resolv.conf"
+        if [ -f /etc/resolv.conf ]; then
+            cp /etc/resolv.conf "$_alpine_root/etc/resolv.conf"
+        else
+            printf "nameserver 8.8.8.8\nnameserver 8.8.4.4\n" > "$_alpine_root/etc/resolv.conf"
+        fi
 
         # --- Optimization (Packages & Cleanup) ---
         _log "Optimizing system (Packages & Cleanup)..."
         "$_proot_bin" -r "$_alpine_root" -0 -b /dev -b /sys -b /proc /bin/sh -c "
-            apk update && 
-            apk upgrade && 
+            apk update &&
+            apk upgrade &&
             apk add --no-cache bash ca-certificates coreutils shadow-login &&
-            rm -rf /var/cache/apk/*
+            rm -rf /usr/share/man /usr/share/doc /var/cache/apk/*
         " || _log "⚠️ Optimization failed (non-critical)."
     else
         _log "Alpine RootFS already exists at lib/proot-alpine. Skipping download."
@@ -79,50 +85,82 @@ _install() {
 
     # 3. Create proot-alpine Wrapper
     _log "Creating 'proot-alpine' command wrapper..."
-    cat <<EOF > "$_alpine_wrapper"
+    cat <<'WRAP' > "$_alpine_wrapper"
 #!/bin/sh
 # Alpine PRoot wrapper for Shill
-# Usage: proot-alpine [command]
+#   proot-alpine                 -> interactive shell (keeps current directory)
+#   proot-alpine <cmd> [args]    -> run a command inside Alpine
+#   proot-alpine add <pkg>...    -> apk add
+#   proot-alpine update          -> apk update && apk upgrade
 
-_ROOT="$_alpine_root"
-_PROOT="$_proot_bin"
+_ROOT="__ROOT__"
+_PROOT="__PROOT__"
 
-# Fallback for SHILL_CORE if not in environment
-[ -z "$SHILL_CORE" ] && export SHILL_CORE=\$(dirname "\$(dirname "\$(readlink -f "\$0")")")
-
-if [ ! -d "\$_ROOT" ]; then
-    echo "❌ Alpine RootFS not found. Please reinstall."
+if [ ! -d "$_ROOT" ]; then
+    echo "❌ Alpine RootFS not found. Please reinstall." >&2
     exit 1
 fi
 
-# Environment Isolation (Detach from Shill ecosystem)
+# Detach from the Shill ecosystem
 export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 unset SHILL_CORE
 unset SHILL_SESSION
 
-# Environment Identity
+# Identity & terminal
+export TERM="${TERM:-xterm-256color}"
+export LANG="C.UTF-8"
 export PS1='\u@\h:\w\$ '
-export TERM=xterm-256color
 
-# Check for features in guest
-_WORK_DIR="/"
-[ -d "\$_ROOT/root" ] && _WORK_DIR="/root"
+# Put proot's temp files on RAM when possible (noticeably faster)
+if [ -d /dev/shm ] && [ -w /dev/shm ]; then
+    export PROOT_TMP_DIR=/dev/shm
+fi
 
 _SHELL="/bin/sh"
-[ -x "\$_ROOT/bin/bash" ] && _SHELL="/bin/bash"
+[ -x "$_ROOT/bin/bash" ] && _SHELL="/bin/bash"
 
-# Note: -0 maps current user to root inside container
-exec "\$_PROOT" \\
-    -r "\$_ROOT" \\
-    -0 -w "\$_WORK_DIR" \\
-    -b /dev -b /sys -b /proc \\
-    -b /tmp \\
-    "\$_SHELL" "\$@"
-EOF
+# Convenience subcommands
+case "${1:-}" in
+    add|install)
+        shift
+        [ $# -gt 0 ] || { echo "usage: $0 add <pkg>..." >&2; exit 1; }
+        set -- /sbin/apk add "$@"
+        ;;
+    update)
+        set -- /bin/sh -c 'apk update && apk upgrade'
+        ;;
+    run)
+        shift
+        [ $# -gt 0 ] || { echo "usage: $0 run <cmd>..." >&2; exit 1; }
+        ;;
+esac
+
+# Default: interactive shell
+[ $# -eq 0 ] && set -- "$_SHELL"
+
+# Keep the current directory visible inside the guest
+_WORKDIR="/root"
+if [ "$PWD" != "/" ] && [ -d "$PWD" ]; then
+    _WORKDIR="$PWD"
+fi
+
+# Build proot arguments, keeping the guest command last.
+# (Each 'set --' prepends options, so quoting of paths is preserved.)
+set -- -r "$_ROOT" -0 -w "$_WORKDIR" -b /dev -b /sys -b /proc -b /tmp "$@"
+[ -f /etc/resolv.conf ] && set -- -b /etc/resolv.conf "$@"
+[ -f /etc/hosts ] && set -- -b /etc/hosts "$@"
+[ "$_WORKDIR" != "/root" ] && set -- -b "$_WORKDIR" "$@"
+if [ -n "$HOME" ] && [ "$HOME" != "/" ] && [ "$HOME" != "$_WORKDIR" ] && [ -d "$HOME" ]; then
+    set -- -b "$HOME" "$@"
+fi
+
+exec "$_PROOT" "$@"
+WRAP
+    sed -i -e "s|__ROOT__|$_alpine_root|g" -e "s|__PROOT__|$_proot_bin|g" "$_alpine_wrapper"
     chmod +x "$_alpine_wrapper"
 
     _ok "proot-alpine installed successfully."
-    _log "Type 'proot-alpine' to enter the environment."
+    _log "Type 'proot-alpine' to enter, 'proot-alpine add <pkg>' to install packages."
 }
 
 _remove() {

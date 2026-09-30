@@ -31,6 +31,7 @@ Install any of these using `./shill.sh install <name>`.
 | `golang` | Official Go toolchain (compiler + stdlib) |
 | `python` | Portable Python 3.13 (adaptive glibc/musl) + uv |
 | `toolchain` | Portable C/C++ toolchain (zig cc + make) for native builds |
+| `git` | Static git client (clone, commit, push) |
 | `frankenphp` | FrankenPHP standalone server (PHP 8.2) |
 | `php` | Static PHP CLI binary (v8.3) |
 | `webi` | WebInstall (webinstall.dev) manager |
@@ -70,8 +71,8 @@ Install any of these using `./shill.sh install <name>`.
 ### 🧪 Experimental
 | Name | Description |
 |------|-------------|
-| `proot-ubuntu` | Lightweight Ubuntu 24.04 (via PRoot) |
-| `proot-alpine` | Ultra-lightweight Alpine Linux (via PRoot) |
+| `proot-ubuntu` | Lightweight Ubuntu 24.04 (via PRoot, cwd-preserving) |
+| `proot-alpine` | Ultra-lightweight Alpine Linux (via PRoot, cwd-preserving) |
 
 ## 🏗️ Built-in Commands
 
@@ -112,6 +113,7 @@ Tool configuration lives inside the core (`etc/env.sh`, sourced on every `enter`
 ./shill.sh install python     # adaptive glibc/musl build -> prebuilt wheels + uv
 ./shill.sh install node       # npm prefix/cache in-core + node-gyp headers
 ./shill.sh install toolchain  # zig cc + make for packages without prebuilt wheels
+./shill.sh install git        # static git client (unlocks lazygit)
 ```
 
 - **Python**: `uv pip install`, `uv venv`, `uv tool install` work out of the box (caches in `cache/uv`, config in `etc/pip.conf`).

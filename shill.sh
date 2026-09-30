@@ -260,7 +260,9 @@ _bootstrap() {
     mkdir -p "$SHILL_CORE/etc/certs"
     cat <<CURLWRAP > "$SHILL_CORE/bin/curl"
 #!/bin/sh
-exec "$SHILL_CORE/bin/curl.bin" --cacert "$SHILL_CORE/etc/cacert.pem" --capath "$SHILL_CORE/etc/certs" "\$@"
+# --http1.1 avoids HTTP/2 "stream not closed cleanly" errors from some CDNs
+# (e.g. Cloudflare); --retry makes flaky/slow links survivable.
+exec "$SHILL_CORE/bin/curl.bin" --cacert "$SHILL_CORE/etc/cacert.pem" --capath "$SHILL_CORE/etc/certs" --http1.1 --retry 5 --retry-delay 2 --retry-connrefused --connect-timeout 30 "\$@"
 CURLWRAP
     chmod +x "$SHILL_CORE/bin/curl"
     _ok "Curl wrapper created (auto --cacert + --capath)."

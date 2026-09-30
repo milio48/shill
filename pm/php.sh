@@ -41,9 +41,10 @@ _install() {
 
     _log "Installing Static PHP ${PHP_VERSION} (${_arch})..."
 
-    # Download
+    # Download (http1.1 + retries: static-php.dev sits behind Cloudflare and
+    # its HTTP/2 handshake sometimes aborts on minimal curl builds)
     _log "Downloading from static-php.dev..."
-    curl -fsSL "$_url" -o "$_tmp_tar" || _die "Download failed."
+    curl -fsSL --http1.1 --retry 5 --retry-delay 2 --retry-connrefused --connect-timeout 30 "$_url" -o "$_tmp_tar" || _die "Download failed."
 
     # Extract
     _log "Extracting..."

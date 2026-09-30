@@ -26,8 +26,11 @@ Install any of these using `./shill.sh install <name>`.
 ### 🛠️ Developer Tools
 | Name | Description |
 |------|-------------|
-| `node` | Node.js runtime (LTS) + npm & npx |
-| `python` | Portable Python 3.13 (standalone musl) |
+| `node` | Node.js runtime (LTS) + npm, npx & node-gyp headers |
+| `bun` | All-in-one JavaScript runtime, package manager & bundler |
+| `golang` | Official Go toolchain (compiler + stdlib) |
+| `python` | Portable Python 3.13 (adaptive glibc/musl) + uv |
+| `toolchain` | Portable C/C++ toolchain (zig cc + make) for native builds |
 | `frankenphp` | FrankenPHP standalone server (PHP 8.2) |
 | `php` | Static PHP CLI binary (v8.3) |
 | `webi` | WebInstall (webinstall.dev) manager |
@@ -99,6 +102,22 @@ $SHILL_CORE/
 ├── .shill_history    # Isolated bash history
 └── .shill_rc         # Isolated bash config
 ```
+
+## 🧑‍💻 Development Recipes
+
+Tool configuration lives inside the core (`etc/env.sh`, sourced on every `enter`), so caches and prefixes stay portable:
+
+```bash
+./shill.sh install python     # adaptive glibc/musl build -> prebuilt wheels + uv
+./shill.sh install node       # npm prefix/cache in-core + node-gyp headers
+./shill.sh install toolchain  # zig cc + make for packages without prebuilt wheels
+```
+
+- **Python**: `uv pip install`, `uv venv`, `uv tool install` work out of the box (caches in `cache/uv`, config in `etc/pip.conf`).
+- **Node**: `npm i -g <pkg>` installs into `bin/`, the cache stays in `cache/npm`, and native addons compile against `lib/node-gyp`.
+- **Bun**: `bun install`, `bun run`, `bun x` — a single-binary npm alternative (cache in `cache/bun`).
+- **Go**: `go build` / `go install` work directly; installed binaries land in `bin/` (`GOBIN`).
+- **No prebuilt wheel?** `shill install toolchain` exports `CC="zig cc"`, letting `pip` / `node-gyp` / `cgo` build from source without root.
 
 ---
 MIT License • Created for the Stowaways.

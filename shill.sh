@@ -222,6 +222,8 @@ _bootstrap() {
     _shill_script="${1:-$(readlink -f "$0" 2>/dev/null || echo "$(cd "$(dirname "$0")" && pwd)/$(basename "$0")")}"
 
     mkdir -p "$SHILL_CORE/bin" "$SHILL_CORE/busybox_links" "$SHILL_CORE/cache"
+    mkdir -p "$SHILL_CORE/etc/profile.d" "$SHILL_CORE/lib" "$SHILL_CORE/share"
+    _ensure_env_contract
 
     _arch="$(_get_arch)"
     _static_base="https://raw.githubusercontent.com/ryanwoodsmall/static-binaries/master/${_arch}"
@@ -339,8 +341,19 @@ _build_symlink_farm() {
     _ok "Symlink farm created: $_count applets linked."
 }
 
+# Environment contract: a single file every pm/*.sh appends its tool
+# configuration to (pip config, npm prefix/cache, CC/CXX, uv dirs, ...).
+# It is sourced by .shill_rc so the config travels with the core.
+_ensure_env_contract() {
+    mkdir -p "$SHILL_CORE/etc"
+    if [ ! -f "$SHILL_CORE/etc/env.sh" ]; then
+        printf '# Shill environment contract (managed automatically by pm/*.sh)\n' > "$SHILL_CORE/etc/env.sh"
+    fi
+}
+
 _create_rc() {
     _rc_file="$SHILL_CORE/.shill_rc"
+    _ensure_env_contract
     cat <<'RCEOF' > "$_rc_file"
 # ==============================================
 # .shill_rc - Shill Interactive Shell Config
@@ -355,6 +368,9 @@ export HISTFILE="$SHILL_CORE/.shill_history"
 export HISTSIZE=5000
 export HISTFILESIZE=10000
 export SHILL_SESSION=1
+
+# Environment contract (pip, npm, uv, toolchain, ...) appended by pm/*.sh
+[ -f "$SHILL_CORE/etc/env.sh" ] && . "$SHILL_CORE/etc/env.sh"
 RCEOF
 
     # PS1 and aliases (no expansion needed)

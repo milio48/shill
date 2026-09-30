@@ -14,6 +14,19 @@ _ok()   { printf '[shill:php] ✅ %s\n' "$*"; }
 
 [ -z "$SHILL_CORE" ] && _die "SHILL_CORE is not set."
 
+_append_env() {
+    _env_file="$SHILL_CORE/etc/env.sh"
+    mkdir -p "$SHILL_CORE/etc"
+    [ -f "$_env_file" ] || printf '# Shill environment contract (managed automatically by pm/*.sh)\n' > "$_env_file"
+    grep -q '>>> shill:php >>>' "$_env_file" && return 0
+    cat <<EOF >> "$_env_file"
+
+# >>> shill:php >>>
+export PHPRC="$SHILL_CORE/etc/php"
+# <<< shill:php <<<
+EOF
+}
+
 _install() {
     # Detect architecture
     case "$(uname -m)" in
@@ -50,13 +63,16 @@ _install() {
         _log "Note: Could not install Composer."
     fi
 
-    # Optimization for Development: Create php.ini if not exists
+    # Optimization for Development: Create php.ini (read via PHPRC, the CLI
+    # does NOT auto-load a php.ini sitting next to the binary on Linux)
     _log "Configuring PHP for development..."
-    if [ ! -f "$SHILL_CORE/bin/php.ini" ]; then
-        echo "memory_limit=-1" > "$SHILL_CORE/bin/php.ini"
-        echo "display_errors=On" >> "$SHILL_CORE/bin/php.ini"
-        echo "error_reporting=E_ALL" >> "$SHILL_CORE/bin/php.ini"
+    mkdir -p "$SHILL_CORE/etc/php"
+    if [ ! -f "$SHILL_CORE/etc/php/php.ini" ]; then
+        echo "memory_limit=-1" > "$SHILL_CORE/etc/php/php.ini"
+        echo "display_errors=On" >> "$SHILL_CORE/etc/php/php.ini"
+        echo "error_reporting=E_ALL" >> "$SHILL_CORE/etc/php/php.ini"
     fi
+    _append_env
 
     _ok "Static PHP installed successfully at $SHILL_CORE/bin/php"
     "$_target" -v | head -n 1
@@ -66,6 +82,11 @@ _remove() {
     _log "Removing Static PHP..."
     rm -f "$SHILL_CORE/bin/php"
     rm -f "$SHILL_CORE/bin/composer"
+    rm -f "$SHILL_CORE/bin/php.ini"
+    rm -rf "$SHILL_CORE/etc/php"
+    if [ -f "$SHILL_CORE/etc/env.sh" ]; then
+        sed -i '/# >>> shill:php >>>/,/# <<< shill:php <<</d' "$SHILL_CORE/etc/env.sh" 2>/dev/null || true
+    fi
     _ok "Static PHP removed."
 }
 

@@ -35,6 +35,7 @@ Install any of these using `./shill.sh install <name>`.
 | `frankenphp` | FrankenPHP standalone server (PHP 8.2) |
 | `php` | Static PHP CLI binary (v8.3) |
 | `webi` | WebInstall (webinstall.dev) manager |
+| `pkgx` | Rootless single-binary package runner (provisions tools on demand) |
 | `jq` | Lightweight JSON processor |
 | `micro` | Modern and intuitive terminal text editor |
 | `sqlite3` | Static SQLite3 command-line interface |
@@ -135,7 +136,8 @@ Tool configuration lives inside the core (`etc/env.sh`, sourced on every `enter`
 - **Bun**: `bun install`, `bun run`, `bun x` — a single-binary npm alternative (cache in `cache/bun`).
 - **Go**: `go build` / `go install` work directly; installed binaries land in `bin/` (`GOBIN`).
 - **No prebuilt wheel?** `shill install toolchain` exports `CC="zig cc"`, letting `pip` / `node-gyp` / `cgo` build from source without root.
-- **Version pinning**: `shill install node@20.11.0`, `shill install php@8.2.29`, `shill install git@2.55.0`. Packages downloaded from a versioned URL honor the override; script-only packages (`bench`, `linpeas`, `webi`, ...) do not.
+- **Always latest, pinnable**: packages with a versioned upstream follow the newest release by default (`node` tracks the latest LTS); pin anything with `shill install node@20.11.0` (or `pkg@version`).
+- **Long tail**: `shill install pkgx` then `pkgx <tool>` (e.g. `pkgx 7z`, `pkgx jq`, `pkgx node@20`) provisions tools on demand without root. `pkgx -Q` lists the pantry.
 
 ---
 MIT License • Created for the Stowaways.

@@ -8,10 +8,13 @@ set -e
 
 LAZYGIT_VERSION="v0.59.0"
 
-# Custom version: shill install lazygit@0.59.0  (leading 'v' optional)
-if [ -n "${SHILL_PKG_VERSION:-}" ]; then
-    LAZYGIT_VERSION="$SHILL_PKG_VERSION"
+# Version: custom > latest release > pinned fallback (normalized to leading 'v')
+if [ -z "${SHILL_PKG_VERSION:-}" ] && [ "$1" != "remove" ] && [ "$1" != "uninstall" ]; then
+    _latest=$(curl -fsSL "https://api.github.com/repos/jesseduffield/lazygit/releases/latest" 2>/dev/null \
+        | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
+    [ -n "$_latest" ] && LAZYGIT_VERSION="$_latest"
 fi
+[ -n "${SHILL_PKG_VERSION:-}" ] && LAZYGIT_VERSION="$SHILL_PKG_VERSION"
 case "$LAZYGIT_VERSION" in
     v*) ;;
     *) LAZYGIT_VERSION="v$LAZYGIT_VERSION" ;;

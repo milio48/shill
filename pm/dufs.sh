@@ -8,10 +8,13 @@ set -e
 
 DUFS_VERSION="v0.45.0"
 
-# Custom version: shill install dufs@0.45.0  (leading 'v' optional)
-if [ -n "${SHILL_PKG_VERSION:-}" ]; then
-    DUFS_VERSION="$SHILL_PKG_VERSION"
+# Version: custom > latest release > pinned fallback (normalized to leading 'v')
+if [ -z "${SHILL_PKG_VERSION:-}" ] && [ "$1" != "remove" ] && [ "$1" != "uninstall" ]; then
+    _latest=$(curl -fsSL "https://api.github.com/repos/sigoden/dufs/releases/latest" 2>/dev/null \
+        | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
+    [ -n "$_latest" ] && DUFS_VERSION="$_latest"
 fi
+[ -n "${SHILL_PKG_VERSION:-}" ] && DUFS_VERSION="$SHILL_PKG_VERSION"
 case "$DUFS_VERSION" in
     v*) ;;
     *) DUFS_VERSION="v$DUFS_VERSION" ;;

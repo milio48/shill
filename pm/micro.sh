@@ -8,10 +8,13 @@ set -e
 
 MICRO_VERSION="2.0.14"
 
-# Custom version: shill install micro@2.0.14  (leading 'v' optional)
-if [ -n "${SHILL_PKG_VERSION:-}" ]; then
-    MICRO_VERSION="${SHILL_PKG_VERSION#v}"
+# Version: custom > latest release > pinned fallback (leading 'v' stripped)
+if [ -z "${SHILL_PKG_VERSION:-}" ] && [ "$1" != "remove" ] && [ "$1" != "uninstall" ]; then
+    _latest=$(curl -fsSL "https://api.github.com/repos/zyedidia/micro/releases/latest" 2>/dev/null \
+        | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
+    [ -n "$_latest" ] && MICRO_VERSION="${_latest#v}"
 fi
+[ -n "${SHILL_PKG_VERSION:-}" ] && MICRO_VERSION="${SHILL_PKG_VERSION#v}"
 
 _log()  { printf '[shill:micro] %s\n' "$*"; }
 _die()  { printf '[shill:micro] ❌ %s\n' "$*" >&2; exit 1; }

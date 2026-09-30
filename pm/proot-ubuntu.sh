@@ -14,6 +14,24 @@ _ok()   { printf '[shill:proot-ubuntu] ✅ %s\n' "$*"; }
 
 [ -z "$SHILL_CORE" ] && _die "SHILL_CORE is not set."
 
+_verify_sha256() {
+    _file="$1"
+    _want="$2"
+    if command -v sha256sum >/dev/null 2>&1; then
+        _got=$(sha256sum "$_file" | awk '{print $1}')
+    elif command -v shasum >/dev/null 2>&1; then
+        _got=$(shasum -a 256 "$_file" | awk '{print $1}')
+    else
+        _log "⚠️  No sha256 tool available; skipping integrity check."
+        return 0
+    fi
+    if [ "$_got" != "$_want" ]; then
+        rm -f "$_file"
+        _die "Checksum mismatch for $(basename "$_file")."
+    fi
+    _ok "Checksum verified."
+}
+
 _install() {
     # Detect architecture
     _arch_raw=$(uname -m)
@@ -31,13 +49,22 @@ _install() {
 
     # Dynamic version detection for 24.04 (Noble) latest point release
     _release_url="http://cdimage.ubuntu.com/ubuntu-base/releases/24.04/release/"
-    _log "Detecting latest Ubuntu 24.04 point release..."
-    UBUNTU_VERSION=$(curl -fsSL "$_release_url/SHA256SUMS" | grep -o "ubuntu-base-24\.04\.[0-9]-base-${_ubuntu_arch}.tar.gz" | head -n 1 | cut -d- -f3)
+    _sums=$(curl -fsSL "$_release_url/SHA256SUMS" 2>/dev/null || true)
+
+    if [ -n "${SHILL_PKG_VERSION:-}" ]; then
+        UBUNTU_VERSION="${SHILL_PKG_VERSION#v}"
+        _log "Pinned Ubuntu version: $UBUNTU_VERSION"
+    else
+        _log "Detecting latest Ubuntu 24.04 point release..."
+        UBUNTU_VERSION=$(printf '%s\n' "$_sums" | grep -o "ubuntu-base-24\.04\.[0-9]-base-${_ubuntu_arch}.tar.gz" | head -n 1 | cut -d- -f3)
+    fi
 
     [ -z "$UBUNTU_VERSION" ] && _die "Could not detect latest Ubuntu version."
-    _log "Latest version detected: $UBUNTU_VERSION"
+    _log "Ubuntu version: $UBUNTU_VERSION"
 
-    _rootfs_url="${_release_url}ubuntu-base-${UBUNTU_VERSION}-base-${_ubuntu_arch}.tar.gz"
+    _rootfs_file="ubuntu-base-${UBUNTU_VERSION}-base-${_ubuntu_arch}.tar.gz"
+    _sha=$(printf '%s\n' "$_sums" | awk -v f="$_rootfs_file" 'index($0, f) { print $1; exit }')
+    _rootfs_url="${_release_url}${_rootfs_file}"
     _lib_dir="$SHILL_CORE/lib"
     _ubuntu_root="$_lib_dir/proot-ubuntu"
     _cache="$SHILL_CORE/cache"
@@ -58,6 +85,11 @@ _install() {
     if [ ! -d "$_ubuntu_root" ]; then
         _log "Downloading Ubuntu RootFS (approx 30MB)..."
         curl -fsSL "$_rootfs_url" -o "$_tgz" || _die "RootFS download failed."
+        if [ -n "$_sha" ]; then
+            _verify_sha256 "$_tgz" "$_sha"
+        else
+            _log "⚠️  No checksum available for Ubuntu ${UBUNTU_VERSION}; skipping verification."
+        fi
 
         _log "Extracting RootFS to lib/proot-ubuntu..."
         mkdir -p "$_ubuntu_root"

@@ -99,6 +99,20 @@ _install() {
 
     _target="${_cpu}-unknown-linux-${_libc}"
 
+    # Default: follow the newest python-build-standalone release. Pick the
+    # highest 3.x build that has an asset for this target.
+    if [ -z "${SHILL_PKG_VERSION:-}" ]; then
+        _rel=$(curl -fsSL "https://api.github.com/repos/astral-sh/python-build-standalone/releases/latest" 2>/dev/null \
+            | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
+        if [ -n "$_rel" ]; then
+            _best=$(curl -fsSL "https://api.github.com/repos/astral-sh/python-build-standalone/releases/tags/${_rel}" 2>/dev/null \
+                | grep -oE "cpython-3\.[0-9]+\.[0-9]+\+${_rel}-${_target}-install_only\.tar\.gz" \
+                | sed -E 's/^cpython-(3\.[0-9]+\.[0-9]+)\+.*/\1/' \
+                | sort -u -t. -k1,1n -k2,2n -k3,3n | tail -n 1)
+            [ -n "$_best" ] && PY_BUILDS="${_rel}:${_best}"
+        fi
+    fi
+
     _cache="$SHILL_CORE/cache"
     _lib_dir="$SHILL_CORE/lib"
     _py_root="$_lib_dir/python"
@@ -153,7 +167,10 @@ prefer-binary = true
 disable-pip-version-check = true
 EOF
 
-    # --- uv: ultra-fast pip/venv replacement (pinned) ---
+    # --- uv: ultra-fast pip/venv replacement (latest, pinned fallback) ---
+    _uv_rel=$(curl -fsSL "https://api.github.com/repos/astral-sh/uv/releases/latest" 2>/dev/null \
+        | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
+    [ -n "$_uv_rel" ] && UV_VERSION="$_uv_rel"
     _log "Installing uv ${UV_VERSION} (Fast Python Package Manager)..."
     _uv_file="uv-${_target}.tar.gz"
     _uv_url="https://github.com/astral-sh/uv/releases/download/${UV_VERSION}/${_uv_file}"

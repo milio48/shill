@@ -16,6 +16,24 @@ _ok()   { printf '[shill:proot-alpine] ✅ %s\n' "$*"; }
 
 [ -z "$SHILL_CORE" ] && _die "SHILL_CORE is not set."
 
+_verify_sha256() {
+    _file="$1"
+    _want="$2"
+    if command -v sha256sum >/dev/null 2>&1; then
+        _got=$(sha256sum "$_file" | awk '{print $1}')
+    elif command -v shasum >/dev/null 2>&1; then
+        _got=$(shasum -a 256 "$_file" | awk '{print $1}')
+    else
+        _log "⚠️  No sha256 tool available; skipping integrity check."
+        return 0
+    fi
+    if [ "$_got" != "$_want" ]; then
+        rm -f "$_file"
+        _die "Checksum mismatch for $(basename "$_file")."
+    fi
+    _ok "Checksum verified."
+}
+
 _install() {
     # Detect architecture
     _arch_raw=$(uname -m)
@@ -31,8 +49,24 @@ _install() {
         *)              _die "Unsupported architecture: $_arch_raw" ;;
     esac
 
-    _v_major_minor=$(echo "$ALPINE_VERSION" | cut -d. -f1,2)
-    _rootfs_url="https://dl-cdn.alpinelinux.org/alpine/v${_v_major_minor}/releases/${_alpine_arch}/alpine-minirootfs-${ALPINE_VERSION}-${_alpine_arch}.tar.gz"
+    # Version: custom > Alpine latest-stable > pinned fallback (with sha256)
+    if [ -n "${SHILL_PKG_VERSION:-}" ]; then
+        ALPINE_VERSION="${SHILL_PKG_VERSION#v}"
+        _base="https://dl-cdn.alpinelinux.org/alpine/v$(echo "$ALPINE_VERSION" | cut -d. -f1,2)"
+    else
+        _base="https://dl-cdn.alpinelinux.org/alpine/latest-stable"
+    fi
+    _sha=""
+    _meta=$(curl -fsSL "${_base}/releases/${_alpine_arch}/latest-releases.yaml" 2>/dev/null || true)
+    if [ -n "$_meta" ]; then
+        _mv=$(printf '%s\n' "$_meta" | sed -n 's/^ *file: alpine-minirootfs-\([0-9][0-9.]*\)-.*/\1/p' | head -n 1)
+        _sha=$(printf '%s\n' "$_meta" | awk '/^ *flavor: alpine-minirootfs/{f=1} f && /^ *sha256:/{sub(/.*sha256:[ ]*/,""); print; exit}')
+        if [ -z "${SHILL_PKG_VERSION:-}" ] && [ -n "$_mv" ]; then
+            ALPINE_VERSION="$_mv"
+        fi
+        [ "$_mv" = "$ALPINE_VERSION" ] || _sha=""
+    fi
+    _rootfs_url="${_base}/releases/${_alpine_arch}/alpine-minirootfs-${ALPINE_VERSION}-${_alpine_arch}.tar.gz"
 
     _lib_dir="$SHILL_CORE/lib"
     _alpine_root="$_lib_dir/proot-alpine"
@@ -54,6 +88,11 @@ _install() {
     if [ ! -d "$_alpine_root" ]; then
         _log "Downloading Alpine RootFS (approx 3MB)..."
         curl -fsSL "$_rootfs_url" -o "$_tgz" || _die "RootFS download failed."
+        if [ -n "$_sha" ]; then
+            _verify_sha256 "$_tgz" "$_sha"
+        else
+            _log "⚠️  No checksum available for Alpine ${ALPINE_VERSION}; skipping verification."
+        fi
 
         _log "Extracting RootFS to lib/proot-alpine..."
         mkdir -p "$_alpine_root"

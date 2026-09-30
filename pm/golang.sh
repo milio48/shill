@@ -11,10 +11,12 @@ set -e
 
 GO_VERSION="1.24.1"
 
-# Custom version: shill install golang@1.24.1  ('go'/'v' prefix optional)
-if [ -n "${SHILL_PKG_VERSION:-}" ]; then
-    GO_VERSION="$SHILL_PKG_VERSION"
+# Version: custom > latest stable (go.dev) > pinned fallback
+if [ -z "${SHILL_PKG_VERSION:-}" ] && [ "$1" != "remove" ] && [ "$1" != "uninstall" ]; then
+    _latest=$(curl -fsSL "https://go.dev/VERSION?m=text" 2>/dev/null | head -n 1)
+    [ -n "$_latest" ] && GO_VERSION="$_latest"
 fi
+[ -n "${SHILL_PKG_VERSION:-}" ] && GO_VERSION="$SHILL_PKG_VERSION"
 GO_VERSION="${GO_VERSION#go}"
 GO_VERSION="${GO_VERSION#v}"
 

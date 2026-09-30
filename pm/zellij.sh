@@ -8,10 +8,13 @@ set -e
 
 ZELLIJ_VERSION="v0.44.3"
 
-# Custom version: shill install zellij@0.44.3  (leading 'v' optional)
-if [ -n "${SHILL_PKG_VERSION:-}" ]; then
-    ZELLIJ_VERSION="$SHILL_PKG_VERSION"
+# Version: custom > latest release > pinned fallback (normalized to leading 'v')
+if [ -z "${SHILL_PKG_VERSION:-}" ] && [ "$1" != "remove" ] && [ "$1" != "uninstall" ]; then
+    _latest=$(curl -fsSL "https://api.github.com/repos/zellij-org/zellij/releases/latest" 2>/dev/null \
+        | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
+    [ -n "$_latest" ] && ZELLIJ_VERSION="$_latest"
 fi
+[ -n "${SHILL_PKG_VERSION:-}" ] && ZELLIJ_VERSION="$SHILL_PKG_VERSION"
 case "$ZELLIJ_VERSION" in
     v*) ;;
     *) ZELLIJ_VERSION="v$ZELLIJ_VERSION" ;;

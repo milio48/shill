@@ -8,10 +8,13 @@ set -e
 
 YAZI_VERSION="v26.1.22"
 
-# Custom version: shill install yazi@26.1.22  (leading 'v' optional)
-if [ -n "${SHILL_PKG_VERSION:-}" ]; then
-    YAZI_VERSION="$SHILL_PKG_VERSION"
+# Version: custom > latest release > pinned fallback (normalized to leading 'v')
+if [ -z "${SHILL_PKG_VERSION:-}" ] && [ "$1" != "remove" ] && [ "$1" != "uninstall" ]; then
+    _latest=$(curl -fsSL "https://api.github.com/repos/sxyazi/yazi/releases/latest" 2>/dev/null \
+        | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
+    [ -n "$_latest" ] && YAZI_VERSION="$_latest"
 fi
+[ -n "${SHILL_PKG_VERSION:-}" ] && YAZI_VERSION="$SHILL_PKG_VERSION"
 case "$YAZI_VERSION" in
     v*) ;;
     *) YAZI_VERSION="v$YAZI_VERSION" ;;

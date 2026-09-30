@@ -11,10 +11,14 @@ set -e
 
 NODE_VERSION="v22.14.0"
 
-# Custom version: shill install node@20.11.0  (leading 'v' optional)
-if [ -n "${SHILL_PKG_VERSION:-}" ]; then
-    NODE_VERSION="$SHILL_PKG_VERSION"
+# Version: custom > latest LTS (nodejs.org) > pinned fallback
+if [ -z "${SHILL_PKG_VERSION:-}" ] && [ "$1" != "remove" ] && [ "$1" != "uninstall" ]; then
+    _latest=$(curl -fsSL "https://nodejs.org/dist/index.json" 2>/dev/null \
+        | tr '}' '\n' | grep '"lts":"' | head -n 1 \
+        | sed -E 's/.*"version":"([^"]+)".*/\1/')
+    [ -n "$_latest" ] && NODE_VERSION="$_latest"
 fi
+[ -n "${SHILL_PKG_VERSION:-}" ] && NODE_VERSION="$SHILL_PKG_VERSION"
 case "$NODE_VERSION" in
     v*) ;;
     *) NODE_VERSION="v$NODE_VERSION" ;;

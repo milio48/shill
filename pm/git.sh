@@ -10,10 +10,15 @@ set -e
 
 GIT_VERSION="2.55.0"
 
-# Custom version: shill install git@2.55.0  (leading 'v' optional)
-if [ -n "${SHILL_PKG_VERSION:-}" ]; then
-    GIT_VERSION="${SHILL_PKG_VERSION#v}"
+# Version: custom > latest built tag in our fork > pinned fallback
+if [ -z "${SHILL_PKG_VERSION:-}" ] && [ "$1" != "remove" ] && [ "$1" != "uninstall" ]; then
+    _latest=$(curl -fsSL "https://api.github.com/repos/milio48/static-builds/releases?per_page=100" 2>/dev/null \
+        | grep '"tag_name":' | grep 'git-' \
+        | sed -E 's/.*"git-([0-9]+\.[0-9]+\.[0-9]+)".*/\1/' \
+        | sort -u -t. -k1,1n -k2,2n -k3,3n | tail -n 1)
+    [ -n "$_latest" ] && GIT_VERSION="$_latest"
 fi
+[ -n "${SHILL_PKG_VERSION:-}" ] && GIT_VERSION="${SHILL_PKG_VERSION#v}"
 
 # SHA-256 of the release assets, cross-checked against the release's own
 # checksums.txt. Pinning the exact bytes means a swapped/tampered artifact is

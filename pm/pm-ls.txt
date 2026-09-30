@@ -13,6 +13,7 @@ pinggy:SSH-based tunnel for local exposure
 linpeas:Privilege escalation enumeration tool
 deepce:Docker enumeration and exploitation tool
 webi:WebInstall (webinstall.dev) manager
+pkgx:Rootless single-binary package runner (provisions tools on demand)
 php:Static PHP CLI binary (from static-php.dev)
 zfetch:System & Network info fetch script
 bench:System benchmark script (by TeddySun)

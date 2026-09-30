@@ -8,10 +8,14 @@ set -e
 
 FRANKENPHP_VERSION="1.4.4"
 
-# Custom version: shill install frankenphp@1.4.4  (leading 'v' optional)
-if [ -n "${SHILL_PKG_VERSION:-}" ]; then
-    FRANKENPHP_VERSION="${SHILL_PKG_VERSION#v}"
+# Version: custom (shill install frankenphp@x) > latest release > pinned fallback
+if [ -z "${SHILL_PKG_VERSION:-}" ] && [ "$1" != "remove" ] && [ "$1" != "uninstall" ]; then
+    _latest=$(curl -fsSL "https://api.github.com/repos/dunglas/frankenphp/releases/latest" 2>/dev/null \
+        | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
+    [ -n "$_latest" ] && FRANKENPHP_VERSION="$_latest"
 fi
+[ -n "${SHILL_PKG_VERSION:-}" ] && FRANKENPHP_VERSION="$SHILL_PKG_VERSION"
+FRANKENPHP_VERSION="${FRANKENPHP_VERSION#v}"
 
 _log()  { printf '[shill:frankenphp] %s\n' "$*"; }
 _die()  { printf '[shill:frankenphp] ❌ %s\n' "$*" >&2; exit 1; }

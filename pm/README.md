@@ -28,7 +28,7 @@ All packages installed through Shill **MUST** be portable, standalone binaries. 
 5. **No Interactive Prompts**: The script must run silently without requiring user input.
 6. **Architecture Detection**: Use `uname -s` and `uname -m` to dynamically map and download the correct binary for the user's system.
 7. **Cleanup**: Always remove downloaded archives and extracted temp folders from `$SHILL_CORE/cache/` after installation.
-8. **Custom versions**: If the package is fetched from a versioned URL, honor `SHILL_PKG_VERSION` so users can pin a version with `shill install <pkg>@<version>`. Normalize a leading `v` when the upstream tag style requires it. Skip this for packages with no versioned artifact (e.g. scripts).
+8. **Latest by default, pinnable**: resolve the newest upstream version at install time (GitHub `releases/latest`, a version index, or a directory listing), fall back to a pinned constant when the lookup fails, and honor `SHILL_PKG_VERSION` for an explicit pin (`shill install <pkg>@<version>`). Normalize a leading `v` when the upstream tag style requires it. Skip this for packages with no versioned artifact (e.g. scripts).
 
 ## Registry
 
@@ -53,12 +53,15 @@ Copy and paste the following template to create a new `pm/*.sh` script. Replace 
 
 set -e
 
-[PKG_NAME_UPPER]_VERSION="v1.0.0"
+[PKG_NAME_UPPER]_VERSION="v1.0.0"   # pinned fallback
 
-# Optional version override: shill install [PKG_NAME]@<version>
-if [ -n "${SHILL_PKG_VERSION:-}" ]; then
-    [PKG_NAME_UPPER]_VERSION="$SHILL_PKG_VERSION"
+# Latest by default (skipped for 'remove'); explicit pin via SHILL_PKG_VERSION.
+if [ -z "${SHILL_PKG_VERSION:-}" ] && [ "$1" != "remove" ] && [ "$1" != "uninstall" ]; then
+    _latest=$(curl -fsSL "https://api.github.com/repos/[OWNER]/[REPO]/releases/latest" 2>/dev/null \
+        | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
+    [ -n "$_latest" ] && [PKG_NAME_UPPER]_VERSION="$_latest"
 fi
+[ -n "${SHILL_PKG_VERSION:-}" ] && [PKG_NAME_UPPER]_VERSION="$SHILL_PKG_VERSION"
 
 _log()  { printf '[shill:[PKG_NAME]] %s\n' "$*"; }
 _die()  { printf '[shill:[PKG_NAME]] ❌ %s\n' "$*" >&2; exit 1; }

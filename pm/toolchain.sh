@@ -10,10 +10,14 @@ set -e
 
 ZIG_VERSION="0.13.0"
 
-# Custom version: shill install toolchain@0.13.0  (leading 'v' optional)
-if [ -n "${SHILL_PKG_VERSION:-}" ]; then
-    ZIG_VERSION="${SHILL_PKG_VERSION#v}"
+# Version: custom > latest stable (ziglang.org) > pinned fallback
+if [ -z "${SHILL_PKG_VERSION:-}" ] && [ "$1" != "remove" ] && [ "$1" != "uninstall" ]; then
+    _latest=$(curl -fsSL "https://ziglang.org/download/index.json" 2>/dev/null \
+        | grep -oE '"[0-9]+\.[0-9]+\.[0-9]+"' | tr -d '"' | sort -u \
+        | sort -t. -k1,1n -k2,2n -k3,3n | tail -n 1)
+    [ -n "$_latest" ] && ZIG_VERSION="$_latest"
 fi
+[ -n "${SHILL_PKG_VERSION:-}" ] && ZIG_VERSION="${SHILL_PKG_VERSION#v}"
 
 _log()  { printf '[shill:toolchain] %s\n' "$*"; }
 _die()  { printf '[shill:toolchain] ❌ %s\n' "$*" >&2; exit 1; }

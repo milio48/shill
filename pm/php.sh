@@ -8,10 +8,15 @@ set -e
 
 PHP_VERSION="8.3.0"
 
-# Custom version: shill install php@8.3.0
-if [ -n "${SHILL_PKG_VERSION:-}" ]; then
-    PHP_VERSION="${SHILL_PKG_VERSION#v}"
+# Version: custom > highest available on static-php.dev > pinned fallback
+if [ -z "${SHILL_PKG_VERSION:-}" ] && [ "$1" != "remove" ] && [ "$1" != "uninstall" ]; then
+    _latest=$(curl -fsSL "https://dl.static-php.dev/static-php-cli/common/" 2>/dev/null \
+        | grep -oE 'php-[0-9]+\.[0-9]+\.[0-9]+-cli-linux-(x86_64|aarch64)\.tar\.gz' \
+        | sed -E 's/^php-([0-9]+\.[0-9]+\.[0-9]+)-cli-linux-.*/\1/' \
+        | sort -u -t. -k1,1n -k2,2n -k3,3n | tail -n 1)
+    [ -n "$_latest" ] && PHP_VERSION="$_latest"
 fi
+[ -n "${SHILL_PKG_VERSION:-}" ] && PHP_VERSION="${SHILL_PKG_VERSION#v}"
 
 _log()  { printf '[shill:php] %s\n' "$*"; }
 _die()  { printf '[shill:php] ❌ %s\n' "$*" >&2; exit 1; }

@@ -4,7 +4,7 @@
 
 > *"The Stowaway"* — Zero-dependency, self-modifying, procedural Linux environment manager.
 
-Shill is a single POSIX shell script that bootstraps a **fully isolated, portable userspace** on any Linux server — even the most restricted shared hosting. No root, no `sudo`, no package manager required.
+Shill is a single POSIX shell script that bootstraps a **portable userspace** on any Linux server — even the most restricted shared hosting. No root, no `sudo`, no package manager required. The shell, its commands, tool configs, caches and prefixes all live inside the core, so nothing leaks into the host's `$HOME`.
 
 ## ⚡ Instant Setup
 
@@ -31,7 +31,7 @@ Install any of these using `./shill.sh install <name>`.
 | `golang` | Official Go toolchain (compiler + stdlib) |
 | `python` | Portable Python 3.13 (adaptive glibc/musl) + uv |
 | `toolchain` | Portable C/C++ toolchain (zig cc + make) for native builds |
-| `git` | Static git client (clone, commit, push) |
+| `git` | Static git client (self-built, checksum-verified) |
 | `frankenphp` | FrankenPHP standalone server (PHP 8.2) |
 | `php` | Static PHP CLI binary (v8.3) |
 | `webi` | WebInstall (webinstall.dev) manager |
@@ -86,6 +86,7 @@ Shill comes with **300+ standard Linux commands** out of the box (via BusyBox fa
 | `./shill.sh enter` | Launch interactive shell (with history & colors) |
 | `./shill.sh space <cmd>` | Run a single command in Shill environment |
 | `./shill.sh install <pkg>` | Install a new package |
+| `./shill.sh install <pkg>@<ver>` | Install a specific version (where supported) |
 | `./shill.sh remove <pkg>` | Remove a package cleanly |
 | `./shill.sh ls` | List all available & installed packages |
 | `./shill.sh destroy` | Wipe the entire environment (factory reset) |
@@ -96,13 +97,26 @@ Setting up Shill is non-destructive. You can install it to the default `~/.shill
 
 ```
 $SHILL_CORE/
-├── bin/              # Standalone binaries (bash, curl, packages)
-├── etc/              # Configs (cacert.pem, etc.)
+├── bin/              # Standalone binaries + package wrappers
+├── etc/              # Configs & the env contract (env.sh, pip.conf, npmrc, cacert.pem)
 ├── busybox_links/    # Symlink farm (300+ linux commands)
-├── lib/              # Library files & language runtimes
-├── cache/            # Temporary download folder
+├── lib/              # Language runtimes & package payloads (python, go, git, zig, ...)
+├── share/            # Shared data
+├── cache/            # Downloads and tool caches (pip, npm, uv, go, ...)
 ├── .shill_history    # Isolated bash history
 └── .shill_rc         # Isolated bash config
+```
+
+## 🧪 PRoot Environments
+
+`proot-alpine` / `proot-ubuntu` give you a full distro without root. The wrapper keeps your **current directory** (and `$HOME`) visible inside the guest, so paths match the host — no copying files in and out.
+
+```bash
+./shill.sh install proot-alpine
+proot-alpine                 # interactive shell, starts in your current directory
+proot-alpine add git         # apk add
+proot-alpine update          # apk update && apk upgrade
+proot-alpine run ls -la      # one-off command
 ```
 
 ## 🧑‍💻 Development Recipes
@@ -121,6 +135,7 @@ Tool configuration lives inside the core (`etc/env.sh`, sourced on every `enter`
 - **Bun**: `bun install`, `bun run`, `bun x` — a single-binary npm alternative (cache in `cache/bun`).
 - **Go**: `go build` / `go install` work directly; installed binaries land in `bin/` (`GOBIN`).
 - **No prebuilt wheel?** `shill install toolchain` exports `CC="zig cc"`, letting `pip` / `node-gyp` / `cgo` build from source without root.
+- **Version pinning**: `shill install node@20.11.0`, `shill install php@8.2.29`, `shill install git@2.55.0`. Packages downloaded from a versioned URL honor the override; script-only packages (`bench`, `linpeas`, `webi`, ...) do not.
 
 ---
 MIT License • Created for the Stowaways.

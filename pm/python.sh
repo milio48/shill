@@ -16,6 +16,16 @@ set -e
 PY_BUILDS="20260929:3.13.15 20250212:3.13.2"
 UV_VERSION="0.6.3"
 
+# Custom version: shill install python@3.13.15 (tries known tags) or
+# shill install python@20260929:3.13.15 (explicit tag:version)
+if [ -n "${SHILL_PKG_VERSION:-}" ]; then
+    _pv="${SHILL_PKG_VERSION#v}"
+    case "$_pv" in
+        *:*) PY_BUILDS="$_pv" ;;
+        *)   PY_BUILDS="20260929:$_pv 20250212:$_pv" ;;
+    esac
+fi
+
 _log()  { printf '[shill:python] %s\n' "$*"; }
 _die()  { printf '[shill:python] ❌ %s\n' "$*" >&2; exit 1; }
 _ok()   { printf '[shill:python] ✅ %s\n' "$*"; }

@@ -8,6 +8,11 @@ set -e
 
 PHP_VERSION="8.3.0"
 
+# Custom version: shill install php@8.3.0
+if [ -n "${SHILL_PKG_VERSION:-}" ]; then
+    PHP_VERSION="${SHILL_PKG_VERSION#v}"
+fi
+
 _log()  { printf '[shill:php] %s\n' "$*"; }
 _die()  { printf '[shill:php] ❌ %s\n' "$*" >&2; exit 1; }
 _ok()   { printf '[shill:php] ✅ %s\n' "$*"; }

@@ -11,6 +11,15 @@ set -e
 
 NODE_VERSION="v22.14.0"
 
+# Custom version: shill install node@20.11.0  (leading 'v' optional)
+if [ -n "${SHILL_PKG_VERSION:-}" ]; then
+    NODE_VERSION="$SHILL_PKG_VERSION"
+fi
+case "$NODE_VERSION" in
+    v*) ;;
+    *) NODE_VERSION="v$NODE_VERSION" ;;
+esac
+
 _log()  { printf '[shill:node] %s\n' "$*"; }
 _die()  { printf '[shill:node] ❌ %s\n' "$*" >&2; exit 1; }
 _ok()   { printf '[shill:node] ✅ %s\n' "$*"; }

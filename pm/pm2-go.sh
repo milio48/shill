@@ -10,6 +10,11 @@ set -e
 
 PM2_GO_VERSION="0.2.0"
 
+# Custom version: shill install pm2-go@0.2.0  (leading 'v' optional)
+if [ -n "${SHILL_PKG_VERSION:-}" ]; then
+    PM2_GO_VERSION="${SHILL_PKG_VERSION#v}"
+fi
+
 _log()  { printf '[shill:pm2-go] %s\n' "$*"; }
 _die()  { printf '[shill:pm2-go] ❌ %s\n' "$*" >&2; exit 1; }
 _ok()   { printf '[shill:pm2-go] ✅ %s\n' "$*"; }

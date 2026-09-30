@@ -501,9 +501,19 @@ _list() {
 
 _install() {
     _pkg="$1"
-    [ -z "$_pkg" ] && _die "Usage: shill.sh install <package>"
+    _ver="$2"
+    [ -z "$_pkg" ] && _die "Usage: shill.sh install <package>[@version]"
 
-    _log "Installing: $_pkg"
+    # Support both 'pkg@version' and 'pkg version'
+    case "$_pkg" in
+        *@*) _ver="${_pkg#*@}"; _pkg="${_pkg%@*}" ;;
+    esac
+
+    if [ -n "$_ver" ]; then
+        _log "Installing: $_pkg ($_ver)"
+    else
+        _log "Installing: $_pkg"
+    fi
 
     _installer_url="${SHILL_REPO}/pm/${_pkg}.sh"
     _installer_path="$SHILL_CORE/cache/${_pkg}.sh"
@@ -522,7 +532,9 @@ _install() {
     chmod +x "$_installer_path"
 
     # Execute installer within Shill environment
+    # SHILL_PKG_VERSION carries an optional custom version (useful for pinning).
     SHILL_CORE="$SHILL_CORE" \
+    SHILL_PKG_VERSION="$_ver" \
     PATH="$SHILL_CORE/bin:$SHILL_CORE/busybox_links:$PATH" \
     sh "$_installer_path"
 
@@ -541,6 +553,11 @@ _install() {
 _remove() {
     _pkg="$1"
     [ -z "$_pkg" ] && _die "Usage: shill.sh remove <package>"
+
+    # Ignore any '@version' suffix
+    case "$_pkg" in
+        *@*) _pkg="${_pkg%@*}" ;;
+    esac
 
     # Protect core binaries
     case "$_pkg" in
@@ -647,7 +664,7 @@ _help() {
     echo "    enter           Launch interactive Shill shell (with arrow keys & history)"
     echo "    space <cmd>     Run a single command in Shill environment"
     echo "    ls              List installed & available packages"
-    echo "    install <pkg>   Install a package from the registry"
+    echo "    install <pkg>   Install a package (optionally pkg@version)"
     echo "    remove <pkg>    Remove an installed package"
     echo "    destroy         Wipe Shill completely (with confirmation)"
     echo "    version         Show version info"
@@ -680,7 +697,7 @@ case "$1" in
     enter)   _enter ;;
     space)   shift; _space "$@" ;;
     ls)      _list ;;
-    install) _install "$2" ;;
+    install) _install "$2" "$3" ;;
     remove)  _remove "$2" ;;
     destroy) _destroy ;;
     version) _version ;;

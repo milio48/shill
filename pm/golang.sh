@@ -11,6 +11,13 @@ set -e
 
 GO_VERSION="1.24.1"
 
+# Custom version: shill install golang@1.24.1  ('go'/'v' prefix optional)
+if [ -n "${SHILL_PKG_VERSION:-}" ]; then
+    GO_VERSION="$SHILL_PKG_VERSION"
+fi
+GO_VERSION="${GO_VERSION#go}"
+GO_VERSION="${GO_VERSION#v}"
+
 _log()  { printf '[shill:go] %s\n' "$*"; }
 _die()  { printf '[shill:go] ❌ %s\n' "$*" >&2; exit 1; }
 _ok()   { printf '[shill:go] ✅ %s\n' "$*"; }

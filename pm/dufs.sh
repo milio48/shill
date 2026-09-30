@@ -8,6 +8,15 @@ set -e
 
 DUFS_VERSION="v0.45.0"
 
+# Custom version: shill install dufs@0.45.0  (leading 'v' optional)
+if [ -n "${SHILL_PKG_VERSION:-}" ]; then
+    DUFS_VERSION="$SHILL_PKG_VERSION"
+fi
+case "$DUFS_VERSION" in
+    v*) ;;
+    *) DUFS_VERSION="v$DUFS_VERSION" ;;
+esac
+
 _log()  { printf '[shill:dufs] %s\n' "$*"; }
 _die()  { printf '[shill:dufs] ❌ %s\n' "$*" >&2; exit 1; }
 _ok()   { printf '[shill:dufs] ✅ %s\n' "$*"; }

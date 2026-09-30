@@ -10,6 +10,11 @@ set -e
 
 ZIG_VERSION="0.13.0"
 
+# Custom version: shill install toolchain@0.13.0  (leading 'v' optional)
+if [ -n "${SHILL_PKG_VERSION:-}" ]; then
+    ZIG_VERSION="${SHILL_PKG_VERSION#v}"
+fi
+
 _log()  { printf '[shill:toolchain] %s\n' "$*"; }
 _die()  { printf '[shill:toolchain] ❌ %s\n' "$*" >&2; exit 1; }
 _ok()   { printf '[shill:toolchain] ✅ %s\n' "$*"; }

@@ -28,6 +28,7 @@ All packages installed through Shill **MUST** be portable, standalone binaries. 
 5. **No Interactive Prompts**: The script must run silently without requiring user input.
 6. **Architecture Detection**: Use `uname -s` and `uname -m` to dynamically map and download the correct binary for the user's system.
 7. **Cleanup**: Always remove downloaded archives and extracted temp folders from `$SHILL_CORE/cache/` after installation.
+8. **Custom versions**: If the package is fetched from a versioned URL, honor `SHILL_PKG_VERSION` so users can pin a version with `shill install <pkg>@<version>`. Normalize a leading `v` when the upstream tag style requires it. Skip this for packages with no versioned artifact (e.g. scripts).
 
 ## Registry
 
@@ -53,6 +54,11 @@ Copy and paste the following template to create a new `pm/*.sh` script. Replace 
 set -e
 
 [PKG_NAME_UPPER]_VERSION="v1.0.0"
+
+# Optional version override: shill install [PKG_NAME]@<version>
+if [ -n "${SHILL_PKG_VERSION:-}" ]; then
+    [PKG_NAME_UPPER]_VERSION="$SHILL_PKG_VERSION"
+fi
 
 _log()  { printf '[shill:[PKG_NAME]] %s\n' "$*"; }
 _die()  { printf '[shill:[PKG_NAME]] ❌ %s\n' "$*" >&2; exit 1; }

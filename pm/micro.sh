@@ -8,6 +8,11 @@ set -e
 
 MICRO_VERSION="2.0.14"
 
+# Custom version: shill install micro@2.0.14  (leading 'v' optional)
+if [ -n "${SHILL_PKG_VERSION:-}" ]; then
+    MICRO_VERSION="${SHILL_PKG_VERSION#v}"
+fi
+
 _log()  { printf '[shill:micro] %s\n' "$*"; }
 _die()  { printf '[shill:micro] ❌ %s\n' "$*" >&2; exit 1; }
 _ok()   { printf '[shill:micro] ✅ %s\n' "$*"; }

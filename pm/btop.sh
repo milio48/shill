@@ -36,11 +36,15 @@ _install() {
     _curl_cmd="curl"
     [ -x "$SHILL_CORE/bin/curl" ] && _curl_cmd="$SHILL_CORE/bin/curl"
     
-    _api_url="https://api.github.com/repos/aristocratos/btop/releases/latest"
-    BTOP_VERSION=$("$_curl_cmd" -fsSL "$_api_url" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
-    
-    if [ -z "$BTOP_VERSION" ]; then
-        _die "Failed to fetch latest version from GitHub."
+    if [ -n "${SHILL_PKG_VERSION:-}" ]; then
+        BTOP_VERSION="$SHILL_PKG_VERSION"
+    else
+        _api_url="https://api.github.com/repos/aristocratos/btop/releases/latest"
+        BTOP_VERSION=$("$_curl_cmd" -fsSL "$_api_url" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
+
+        if [ -z "$BTOP_VERSION" ]; then
+            _die "Failed to fetch latest version from GitHub."
+        fi
     fi
 
     _target_bin="$SHILL_CORE/bin/btop"

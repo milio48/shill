@@ -40,11 +40,15 @@ _install() {
     _curl_cmd="curl"
     [ -x "$SHILL_CORE/bin/curl" ] && _curl_cmd="$SHILL_CORE/bin/curl"
     
-    _api_url="https://api.github.com/repos/jpillora/chisel/releases/latest"
-    CHISEL_VERSION=$("$_curl_cmd" -fsSL "$_api_url" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
-    
-    if [ -z "$CHISEL_VERSION" ]; then
-        _die "Failed to fetch latest version from GitHub."
+    if [ -n "${SHILL_PKG_VERSION:-}" ]; then
+        CHISEL_VERSION="$SHILL_PKG_VERSION"
+    else
+        _api_url="https://api.github.com/repos/jpillora/chisel/releases/latest"
+        CHISEL_VERSION=$("$_curl_cmd" -fsSL "$_api_url" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
+
+        if [ -z "$CHISEL_VERSION" ]; then
+            _die "Failed to fetch latest version from GitHub."
+        fi
     fi
 
     # Remove 'v' from version for asset name formatting

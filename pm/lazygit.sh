@@ -8,6 +8,15 @@ set -e
 
 LAZYGIT_VERSION="v0.59.0"
 
+# Custom version: shill install lazygit@0.59.0  (leading 'v' optional)
+if [ -n "${SHILL_PKG_VERSION:-}" ]; then
+    LAZYGIT_VERSION="$SHILL_PKG_VERSION"
+fi
+case "$LAZYGIT_VERSION" in
+    v*) ;;
+    *) LAZYGIT_VERSION="v$LAZYGIT_VERSION" ;;
+esac
+
 _log()  { printf '[shill:lazygit] %s\n' "$*"; }
 _die()  { printf '[shill:lazygit] ❌ %s\n' "$*" >&2; exit 1; }
 _ok()   { printf '[shill:lazygit] ✅ %s\n' "$*"; }

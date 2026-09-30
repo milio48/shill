@@ -8,6 +8,15 @@ set -e
 
 ZELLIJ_VERSION="v0.44.3"
 
+# Custom version: shill install zellij@0.44.3  (leading 'v' optional)
+if [ -n "${SHILL_PKG_VERSION:-}" ]; then
+    ZELLIJ_VERSION="$SHILL_PKG_VERSION"
+fi
+case "$ZELLIJ_VERSION" in
+    v*) ;;
+    *) ZELLIJ_VERSION="v$ZELLIJ_VERSION" ;;
+esac
+
 _log()  { printf '[shill:zellij] %s\n' "$*"; }
 _die()  { printf '[shill:zellij] ❌ %s\n' "$*" >&2; exit 1; }
 _ok()   { printf '[shill:zellij] ✅ %s\n' "$*"; }

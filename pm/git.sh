@@ -10,6 +10,11 @@ set -e
 
 GIT_VERSION="2.55.0"
 
+# Custom version: shill install git@2.55.0  (leading 'v' optional)
+if [ -n "${SHILL_PKG_VERSION:-}" ]; then
+    GIT_VERSION="${SHILL_PKG_VERSION#v}"
+fi
+
 # SHA-256 of the release assets, cross-checked against the release's own
 # checksums.txt. Pinning the exact bytes means a swapped/tampered artifact is
 # rejected at install time.
@@ -72,7 +77,20 @@ _install() {
 
     _log "Downloading from GitHub Releases..."
     curl -fsSL "$_url" -o "$_cache/$_file" || _die "Download failed. URL: $_url"
-    _verify_sha256 "$_cache/$_file" "$_sha256"
+
+    # Integrity: use the pinned hash for the default version; for any other
+    # version, fall back to the release's own checksums.txt.
+    if [ "$GIT_VERSION" = "2.55.0" ]; then
+        _verify_sha256 "$_cache/$_file" "$_sha256"
+    else
+        _sums=$(curl -fsSL "https://github.com/milio48/static-builds/releases/download/git-${GIT_VERSION}/checksums.txt" 2>/dev/null || true)
+        _want=$(printf '%s\n' "$_sums" | awk -v n="$(basename "$_file")" '$2 == n { print $1 }')
+        if [ -n "$_want" ]; then
+            _verify_sha256 "$_cache/$_file" "$_want"
+        else
+            _log "⚠️  No checksum published for git ${GIT_VERSION}; skipping verification."
+        fi
+    fi
 
     _log "Extracting to $SHILL_CORE/lib/git..."
     rm -rf "$_git_root"

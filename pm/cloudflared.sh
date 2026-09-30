@@ -41,11 +41,15 @@ _install() {
         *)                   _die "Unsupported architecture: $(uname -m)" ;;
     esac
 
-    # Resolve latest tag for logging/pinning; fall back to the pinned tag.
-    _tag="$CLOUDFLARED_FALLBACK_TAG"
-    _api=$(curl -fsSL "https://api.github.com/repos/cloudflare/cloudflared/releases/latest" 2>/dev/null | \
-        grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/' || true)
-    [ -n "$_api" ] && _tag="$_api"
+    # Version: custom (shill install cloudflared@2026.9.3) or latest release tag.
+    if [ -n "${SHILL_PKG_VERSION:-}" ]; then
+        _tag="$SHILL_PKG_VERSION"
+    else
+        _tag="$CLOUDFLARED_FALLBACK_TAG"
+        _api=$(curl -fsSL "https://api.github.com/repos/cloudflare/cloudflared/releases/latest" 2>/dev/null | \
+            grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/' || true)
+        [ -n "$_api" ] && _tag="$_api"
+    fi
 
     _asset="cloudflared-linux-${_arch}"
     _url="https://github.com/cloudflare/cloudflared/releases/download/${_tag}/${_asset}"

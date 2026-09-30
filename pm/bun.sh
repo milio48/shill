@@ -51,11 +51,15 @@ _install() {
     _variant=""
     [ "$(_detect_libc)" = "musl" ] && _variant="-musl"
 
-    # Resolve latest release tag (fallback to a pinned tag).
-    _tag="$BUN_FALLBACK_TAG"
-    _api=$(curl -fsSL "https://api.github.com/repos/oven-sh/bun/releases/latest" 2>/dev/null | \
-        grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/' || true)
-    [ -n "$_api" ] && _tag="$_api"
+    # Version: custom (shill install bun@1.4.2) or latest release tag.
+    if [ -n "${SHILL_PKG_VERSION:-}" ]; then
+        _tag="bun-v${SHILL_PKG_VERSION#v}"
+    else
+        _tag="$BUN_FALLBACK_TAG"
+        _api=$(curl -fsSL "https://api.github.com/repos/oven-sh/bun/releases/latest" 2>/dev/null | \
+            grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/' || true)
+        [ -n "$_api" ] && _tag="$_api"
+    fi
 
     _file="bun-linux-${_cpu}${_variant}.zip"
     _url="https://github.com/oven-sh/bun/releases/download/${_tag}/${_file}"

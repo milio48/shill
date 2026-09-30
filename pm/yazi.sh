@@ -8,6 +8,15 @@ set -e
 
 YAZI_VERSION="v26.1.22"
 
+# Custom version: shill install yazi@26.1.22  (leading 'v' optional)
+if [ -n "${SHILL_PKG_VERSION:-}" ]; then
+    YAZI_VERSION="$SHILL_PKG_VERSION"
+fi
+case "$YAZI_VERSION" in
+    v*) ;;
+    *) YAZI_VERSION="v$YAZI_VERSION" ;;
+esac
+
 _log()  { printf '[shill:yazi] %s\n' "$*"; }
 _die()  { printf '[shill:yazi] ❌ %s\n' "$*" >&2; exit 1; }
 _ok()   { printf '[shill:yazi] ✅ %s\n' "$*"; }

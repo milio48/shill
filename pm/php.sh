@@ -41,10 +41,15 @@ _install() {
 
     _log "Installing Static PHP ${PHP_VERSION} (${_arch})..."
 
-    # Download (http1.1 + retries: static-php.dev sits behind Cloudflare and
-    # its HTTP/2 handshake sometimes aborts on minimal curl builds)
+    # Download. Default path is unchanged; only if it fails do we retry with
+    # HTTP/1.1, because static-php.dev (Cloudflare) sometimes aborts the
+    # HTTP/2 handshake on minimal curl builds.
     _log "Downloading from static-php.dev..."
-    curl -fsSL --http1.1 --retry 5 --retry-delay 2 --retry-connrefused --connect-timeout 30 "$_url" -o "$_tmp_tar" || _die "Download failed."
+    if ! curl -fsSL --retry 3 "$_url" -o "$_tmp_tar"; then
+        _log "Retrying with HTTP/1.1..."
+        rm -f "$_tmp_tar"
+        curl -fsSL --http1.1 --retry 5 --retry-delay 2 --connect-timeout 30 "$_url" -o "$_tmp_tar" || _die "Download failed."
+    fi
 
     # Extract
     _log "Extracting..."

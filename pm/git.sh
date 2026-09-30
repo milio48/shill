@@ -10,6 +10,12 @@ set -e
 
 GIT_VERSION="2.55.0"
 
+# SHA-256 of the release assets (from the GitHub API 'digest' field).
+# Pinning the exact bytes means a swapped/tampered artifact is detected even
+# though the upstream build is a third-party project.
+GIT_SHA256_X86_64="6f8242b13e1ff00af0ac6dc4db013e4a19c9a4bd0878f8bc734239e1ca2d1b59"
+GIT_SHA256_AARCH64="76bf667f94d6e591bbb2732197224f1fd78d71e5de8ad5d5b4ce40ba987cef83"
+
 _log()  { printf '[shill:git] %s\n' "$*"; }
 _die()  { printf '[shill:git] ❌ %s\n' "$*" >&2; exit 1; }
 _ok()   { printf '[shill:git] ✅ %s\n' "$*"; }
@@ -32,10 +38,28 @@ export GIT_CONFIG_GLOBAL="$SHILL_CORE/etc/gitconfig"
 EOF
 }
 
+_verify_sha256() {
+    _file="$1"
+    _want="$2"
+    if command -v sha256sum >/dev/null 2>&1; then
+        _got=$(sha256sum "$_file" | awk '{print $1}')
+    elif command -v shasum >/dev/null 2>&1; then
+        _got=$(shasum -a 256 "$_file" | awk '{print $1}')
+    else
+        _log "⚠️  No sha256 tool available; skipping integrity check."
+        return 0
+    fi
+    if [ "$_got" != "$_want" ]; then
+        rm -f "$_file"
+        _die "Checksum mismatch for $(basename "$_file") (expected $_want, got $_got)."
+    fi
+    _ok "Checksum verified."
+}
+
 _install() {
     case "$(uname -m)" in
-        x86_64|amd64)   _arch="x86_64" ;;
-        aarch64|arm64)  _arch="aarch64" ;;
+        x86_64|amd64)   _arch="x86_64";  _sha256="$GIT_SHA256_X86_64" ;;
+        aarch64|arm64)  _arch="aarch64"; _sha256="$GIT_SHA256_AARCH64" ;;
         *)              _die "Unsupported architecture: $(uname -m) (static git is x86_64/aarch64 only)." ;;
     esac
 
@@ -48,6 +72,7 @@ _install() {
 
     _log "Downloading from GitHub Releases..."
     curl -fsSL "$_url" -o "$_cache/$_file" || _die "Download failed. URL: $_url"
+    _verify_sha256 "$_cache/$_file" "$_sha256"
 
     _log "Extracting to $SHILL_CORE/lib/git..."
     rm -rf "$_git_root"

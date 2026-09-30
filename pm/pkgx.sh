@@ -140,16 +140,43 @@ _install() {
     mkdir -p "$SHILL_CORE/lib/pkgx"
     _append_env
 
+    # Optional helper: expose pkgx tools on PATH via shims
+    cat <<'SHIMHELPER' > "$SHILL_CORE/bin/pkgx-shim"
+#!/bin/sh
+# Create Shill wrappers for pkgx-provided tools:
+#   pkgx-shim <tool> [tool...]
+[ -n "$1" ] || { echo "usage: pkgx-shim <tool> [tool...]" >&2; exit 1; }
+_list="$SHILL_CORE/etc/pkgx-shims"
+mkdir -p "$SHILL_CORE/etc"
+for t in "$@"; do
+    cat > "$SHILL_CORE/bin/$t" <<EOF
+#!/bin/sh
+exec "$SHILL_CORE/bin/pkgx" "$t" "\$@"
+EOF
+    chmod +x "$SHILL_CORE/bin/$t"
+    grep -qx "$t" "$_list" 2>/dev/null || echo "$t" >> "$_list"
+    echo "created shim: $SHILL_CORE/bin/$t"
+done
+SHIMHELPER
+    chmod +x "$SHILL_CORE/bin/pkgx-shim"
+
     _ok "pkgx ${PKGX_VERSION} installed successfully."
     _log "Usage: pkgx <tool> [args]   (e.g. pkgx 7z, pkgx jq, pkgx node@20)"
     _log "       pkgx -Q              list the pantry"
+    _log "       pkgx-shim <tool>     make a tool runnable directly (on PATH)"
     _log "       Packages land in: $SHILL_CORE/lib/pkgx"
     "$SHILL_CORE/bin/pkgx" --version 2>/dev/null || true
 }
 
 _remove() {
     _log "Removing pkgx..."
-    rm -f "$SHILL_CORE/bin/pkgx"
+    rm -f "$SHILL_CORE/bin/pkgx" "$SHILL_CORE/bin/pkgx-shim"
+    if [ -f "$SHILL_CORE/etc/pkgx-shims" ]; then
+        while read -r _t; do
+            [ -n "$_t" ] && rm -f "$SHILL_CORE/bin/$_t"
+        done < "$SHILL_CORE/etc/pkgx-shims"
+        rm -f "$SHILL_CORE/etc/pkgx-shims"
+    fi
     if [ -f "$SHILL_CORE/etc/env.sh" ]; then
         sed -i '/# >>> shill:pkgx >>>/,/# <<< shill:pkgx <<</d' "$SHILL_CORE/etc/env.sh" 2>/dev/null || true
     fi

@@ -258,12 +258,50 @@ _bootstrap() {
     # mbedTLS has TWO hardcoded lookups: --cacert (file) AND --capath (directory).
     # We must override BOTH or it will still fail on the directory lookup.
     mkdir -p "$SHILL_CORE/etc/certs"
-    cat <<CURLWRAP > "$SHILL_CORE/bin/curl"
+    cat <<'CURLWRAP' > "$SHILL_CORE/bin/curl"
 #!/bin/sh
-# Keep this wrapper minimal: it is shared by every download in Shill. Any flag
-# added here changes behaviour for ALL hosts/VPSes, so transport workarounds
-# (e.g. --http1.1) belong in the specific pm/*.sh that actually needs them.
-exec "$SHILL_CORE/bin/curl.bin" --cacert "$SHILL_CORE/etc/cacert.pem" --capath "$SHILL_CORE/etc/certs" "\$@"
+# Shill curl wrapper.
+# Minimal by default. During an interactive install (SHILL_PROGRESS=1) it lets
+# curl show a progress bar for file downloads, so the installer spinner can
+# display a live percentage. API/pipe calls are left untouched.
+_bin=${0%/*}
+[ "$_bin" = "$0" ] && _bin=.
+_core=$(CDPATH= cd -- "$_bin/.." 2>/dev/null && pwd)
+[ -n "$_core" ] || _core=$_bin
+
+_prog=""
+if [ "${SHILL_PROGRESS:-}" = "1" ]; then
+    case " $* " in
+        *" -o "*|*" -O "*) _prog="--progress-bar" ;;
+    esac
+fi
+
+if [ -n "$_prog" ]; then
+    _n=$#
+    _i=0
+    while [ "$_i" -lt "$_n" ]; do
+        _i=$((_i + 1))
+        _a=$1
+        shift
+        case "$_a" in
+            --silent) continue ;;
+            --*) ;;
+            -?*)
+                _c=${_a#-}
+                _out=""
+                while [ -n "$_c" ]; do
+                    _ch=${_c%"${_c#?}"}
+                    _c=${_c#?}
+                    [ "$_ch" = "s" ] || _out=${_out}${_ch}
+                done
+                _a=-${_out}
+                ;;
+        esac
+        set -- "$@" "$_a"
+    done
+fi
+
+exec "$_core/bin/curl.bin" --cacert "$_core/etc/cacert.pem" --capath "$_core/etc/certs" "$@" $_prog
 CURLWRAP
     chmod +x "$SHILL_CORE/bin/curl"
     _ok "Curl wrapper created (auto --cacert + --capath)."
@@ -401,6 +439,11 @@ command_not_found_handle() {
         echo "🎁 Package '$cmd' is available in Shill!"
         echo "   Run: shill install $cmd"
         echo ""
+    elif [ -x "$SHILL_CORE/bin/pkgx" ]; then
+        echo ""
+        echo "💡 pkgx may provide '$cmd':"
+        echo "   Run: pkgx $cmd"
+        echo ""
     fi
     return 127
 }
@@ -462,9 +505,14 @@ _list() {
     # --- Local packages ---
     echo "  ── Installed (local) ──────────────────"
     if [ -d "$SHILL_CORE/bin" ]; then
-        for _bin in "$SHILL_CORE/bin"/*; do
-            [ -f "$_bin" ] && [ -x "$_bin" ] && echo "    ✅ $(basename "$_bin")"
-        done
+        _locals=$(for _bin in "$SHILL_CORE/bin"/*; do
+            [ -f "$_bin" ] && [ -x "$_bin" ] && basename "$_bin"
+        done | sort)
+        if [ -n "$_locals" ]; then
+            echo "$_locals" | while read -r _b; do echo "    ✅ $_b"; done
+        else
+            echo "    (none)"
+        fi
     else
         echo "    (none)"
     fi
@@ -482,9 +530,15 @@ _list() {
         _download "$_catalog_url" "$_tmp_file" 2>/dev/null && cat "$_tmp_file" && rm -f "$_tmp_file")
     fi
 
+    # Offline fallback: reuse the last cached catalog when the fetch failed.
+    if [ -z "$_catalog" ] && [ -s "$SHILL_CORE/cache/catalog.txt" ]; then
+        _catalog=$(cat "$SHILL_CORE/cache/catalog.txt" 2>/dev/null)
+        _warn "Offline: showing cached catalog."
+    fi
+
     if [ -n "$_catalog" ]; then
         echo "$_catalog" > "$SHILL_CORE/cache/catalog.txt"
-        echo "$_catalog" | while IFS=: read -r _name _desc; do
+        echo "$_catalog" | sort | while IFS=: read -r _name _desc; do
             # Check if already installed
             if [ -x "$SHILL_CORE/bin/$_name" ]; then
                 echo "    ✅ $_name  — $_desc"
@@ -531,14 +585,47 @@ _install() {
 
     chmod +x "$_installer_path"
 
-    # Execute installer within Shill environment
+    # Execute the installer inside the Shill environment.
     # SHILL_PKG_VERSION carries an optional custom version (useful for pinning).
-    SHILL_CORE="$SHILL_CORE" \
-    SHILL_PKG_VERSION="$_ver" \
-    PATH="$SHILL_CORE/bin:$SHILL_CORE/busybox_links:$PATH" \
-    sh "$_installer_path"
-
-    _result=$?
+    # On a terminal we show a spinner plus the latest log line, so long silent
+    # downloads never look stuck. The full log is dumped afterwards.
+    _logfile="$SHILL_CORE/cache/.install.log"
+    if [ -t 1 ]; then
+        SHILL_CORE="$SHILL_CORE" \
+        SHILL_PROGRESS=1 \
+        SHILL_PKG_VERSION="$_ver" \
+        PATH="$SHILL_CORE/bin:$SHILL_CORE/busybox_links:$PATH" \
+        sh "$_installer_path" > "$_logfile" 2>&1 &
+        _ipid=$!
+        _ispin=0
+        while kill -0 "$_ipid" 2>/dev/null; do
+            case $((_ispin % 4)) in
+                0) _ich='|' ;;
+                1) _ich='/' ;;
+                2) _ich='-' ;;
+                3) _ich='\' ;;
+            esac
+            if command -v tail >/dev/null 2>&1 && command -v tr >/dev/null 2>&1 && command -v cut >/dev/null 2>&1; then
+                _iline=$(tr '\r' '\n' < "$_logfile" 2>/dev/null | tail -n 1 | cut -c1-78)
+            else
+                _iline="working..."
+            fi
+            printf '\r  %s %s        ' "$_ich" "$_iline"
+            _ispin=$((_ispin + 1))
+            sleep 1
+        done
+        wait "$_ipid"
+        _result=$?
+        printf '\r\033[K'
+        cat "$_logfile" 2>/dev/null
+        rm -f "$_logfile"
+    else
+        SHILL_CORE="$SHILL_CORE" \
+        SHILL_PKG_VERSION="$_ver" \
+        PATH="$SHILL_CORE/bin:$SHILL_CORE/busybox_links:$PATH" \
+        sh "$_installer_path"
+        _result=$?
+    fi
 
     # Cleanup
     rm -f "$_installer_path" 2>/dev/null

@@ -1,5 +1,7 @@
 # 🏴‍☠️ Shill — Portable Standarized Userspace
 
+**Website:** https://milio48.github.io/shill/ • **Source:** https://github.com/milio48/shill
+
 ![Shill Terminal Showcase](assets/showcase.png)
 
 > *"The Stowaway"* — Zero-dependency, self-modifying, procedural Linux environment manager.
@@ -23,19 +25,23 @@ wget -qO shill.sh https://raw.githubusercontent.com/milio48/shill/main/shill.sh 
 
 Install any of these using `./shill.sh install <name>`.
 
+### 📦 Package Managers
+| Name | Description |
+|------|-------------|
+| `pkgx` | Rootless single-binary package runner (provisions tools on demand) |
+| `webi` | WebInstall (webinstall.dev) manager |
+
 ### 🛠️ Developer Tools
 | Name | Description |
 |------|-------------|
-| `node` | Node.js runtime (LTS) + npm, npx & node-gyp headers |
+| `node` | Node.js runtime (latest LTS) + npm, npx & node-gyp headers |
 | `bun` | All-in-one JavaScript runtime, package manager & bundler |
 | `golang` | Official Go toolchain (compiler + stdlib) |
-| `python` | Portable Python 3.13 (adaptive glibc/musl) + uv |
+| `python` | Portable Python (adaptive glibc/musl) + uv |
 | `toolchain` | Portable C/C++ toolchain (zig cc + make) for native builds |
 | `git` | Static git client (self-built, checksum-verified) |
 | `frankenphp` | FrankenPHP standalone server (PHP 8.2) |
-| `php` | Static PHP CLI binary (v8.3) |
-| `webi` | WebInstall (webinstall.dev) manager |
-| `pkgx` | Rootless single-binary package runner (provisions tools on demand) |
+| `php` | Static PHP CLI binary |
 | `jq` | Lightweight JSON processor |
 | `micro` | Modern and intuitive terminal text editor |
 | `sqlite3` | Static SQLite3 command-line interface |
@@ -137,7 +143,7 @@ Tool configuration lives inside the core (`etc/env.sh`, sourced on every `enter`
 - **Go**: `go build` / `go install` work directly; installed binaries land in `bin/` (`GOBIN`).
 - **No prebuilt wheel?** `shill install toolchain` exports `CC="zig cc"`, letting `pip` / `node-gyp` / `cgo` build from source without root.
 - **Always latest, pinnable**: packages with a versioned upstream follow the newest release by default (`node` tracks the latest LTS); pin anything with `shill install node@20.11.0` (or `pkg@version`).
-- **Long tail**: `shill install pkgx` then `pkgx <tool>` (e.g. `pkgx 7z`, `pkgx jq`, `pkgx node@20`) provisions tools on demand without root. `pkgx -Q` lists the pantry.
+- **Long tail**: `shill install pkgx` then `pkgx <tool>` (e.g. `pkgx 7z`, `pkgx jq`, `pkgx node@20`) provisions tools on demand without root. `pkgx -Q` lists the pantry; `pkgx-shim <tool>` writes a wrapper into `bin/` so the tool runs directly.
 
 ---
 MIT License • Created for the Stowaways.

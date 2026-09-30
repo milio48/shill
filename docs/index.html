@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Shill — Portable Standardized Userspace</title>
+<meta name="description" content="Zero-dependency, rootless userspace for any Linux server. One POSIX shell script.">
+<style>
+  :root {
+    --bg: #0d1117; --bg2: #161b22; --fg: #e6edf3; --muted: #8b949e;
+    --acc: #f778ba; --acc2: #79c0ff; --ok: #3fb950; --border: #30363d;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--fg);
+    font: 16px/1.6 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  a { color: var(--acc2); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .wrap { max-width: 900px; margin: 0 auto; padding: 0 20px; }
+  header { padding: 64px 0 32px; text-align: center; }
+  h1 { font-size: clamp(32px, 6vw, 52px); margin: 0 0 8px; }
+  .tag { color: var(--muted); font-style: italic; }
+  .lead { color: var(--muted); max-width: 640px; margin: 16px auto 0; }
+  h2 { margin: 48px 0 16px; font-size: 20px; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+  pre { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px;
+    padding: 14px 16px; overflow-x: auto; position: relative; }
+  code { color: var(--fg); }
+  .copy { position: absolute; top: 8px; right: 8px; background: #21262d; color: var(--muted);
+    border: 1px solid var(--border); border-radius: 6px; padding: 4px 8px; cursor: pointer; font: inherit; font-size: 12px; }
+  .copy:hover { color: var(--fg); }
+  .grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+  .card { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; }
+  .card b { color: var(--acc); }
+  .card p { margin: 6px 0 0; color: var(--muted); font-size: 14px; }
+  #search { width: 100%; padding: 10px 12px; margin: 8px 0 16px; background: var(--bg2);
+    color: var(--fg); border: 1px solid var(--border); border-radius: 8px; font: inherit; }
+  #count { color: var(--muted); font-size: 14px; }
+  .pkg { display: flex; gap: 10px; padding: 8px 4px; border-bottom: 1px solid var(--border); }
+  .pkg .n { color: var(--ok); min-width: 130px; }
+  .pkg .d { color: var(--muted); font-size: 14px; }
+  footer { color: var(--muted); text-align: center; padding: 48px 0; font-size: 14px; }
+  .btns { display: flex; gap: 12px; justify-content: center; margin-top: 20px; flex-wrap: wrap; }
+  .btn { border: 1px solid var(--border); border-radius: 8px; padding: 8px 14px; background: var(--bg2); }
+  .btn:hover { border-color: var(--acc); text-decoration: none; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1>🏴‍☠️ Shill</h1>
+    <p class="tag">"The Stowaway" — portable standardized userspace</p>
+    <p class="lead">A single POSIX shell script that bootstraps a portable userspace on any Linux
+      server — even the most restricted shared hosting. No root, no <code>sudo</code>, no package
+      manager required.</p>
+    <div class="btns">
+      <a class="btn" href="#install">Install</a>
+      <a class="btn" href="#registry">Packages</a>
+      <a class="btn" href="https://github.com/milio48/shill">GitHub</a>
+    </div>
+  </header>
+
+  <h2 id="install">⚡ Instant Setup</h2>
+  <pre><code id="c1">curl -fsSL https://raw.githubusercontent.com/milio48/shill/main/shill.sh -o shill.sh &amp;&amp; chmod +x shill.sh &amp;&amp; ./shill.sh setup</code><button class="copy" data-for="c1">copy</button></pre>
+  <p class="tag">No curl? Use wget:</p>
+  <pre><code id="c2">wget -qO shill.sh https://raw.githubusercontent.com/milio48/shill/main/shill.sh &amp;&amp; chmod +x shill.sh &amp;&amp; ./shill.sh setup</code><button class="copy" data-for="c2">copy</button></pre>
+
+  <h2>✨ Why Shill</h2>
+  <div class="grid">
+    <div class="card"><b>No root</b><p>Runs entirely in your home directory. Nothing system-wide.</p></div>
+    <div class="card"><b>Portable</b><p>Move the core anywhere; config, caches and prefixes travel with it.</p></div>
+    <div class="card"><b>Batteries included</b><p>300+ commands via a BusyBox farm, plus a package registry.</p></div>
+    <div class="card"><b>Always latest, pinnable</b><p>Packages track upstream releases; pin with <code>pkg@version</code>.</p></div>
+    <div class="card"><b>Long tail</b><p>Install anything on demand with <code>pkgx</code> / <code>webi</code>.</p></div>
+    <div class="card"><b>Rootfs when needed</b><p>Full distro shells via <code>proot-alpine</code> / <code>proot-ubuntu</code>.</p></div>
+  </div>
+
+  <h2>🎮 Basic Usage</h2>
+  <pre><code>./shill.sh enter                 # interactive shell
+./shill.sh install &lt;pkg&gt;          # install a package
+./shill.sh install node@20.11.0  # pin a version
+./shill.sh remove &lt;pkg&gt;           # remove cleanly
+./shill.sh ls                    # list packages (A–Z, offline-friendly)
+./shill.sh destroy               # wipe the environment</code></pre>
+
+  <h2 id="registry">📦 Package Registry</h2>
+  <p id="count">Loading…</p>
+  <input id="search" type="search" placeholder="Filter packages…" autocomplete="off">
+  <div id="list"></div>
+
+  <footer>
+    MIT License • Created for the Stowaways •
+    <a href="https://github.com/milio48/shill">milio48/shill</a>
+  </footer>
+
+</div>
+
+<script>
+const CATALOG = "https://raw.githubusercontent.com/milio48/shill/main/pm/pm-ls.txt";
+const listEl = document.getElementById("list");
+const countEl = document.getElementById("count");
+const searchEl = document.getElementById("search");
+let items = [];
+
+function render(filter) {
+  const f = (filter || "").trim().toLowerCase();
+  const shown = items.filter(p => !f || p.name.includes(f) || p.desc.toLowerCase().includes(f));
+  listEl.innerHTML = shown.map(p =>
+    `<div class="pkg"><span class="n">${p.name}</span><span class="d">${p.desc}</span></div>`
+  ).join("");
+  countEl.textContent = `${shown.length} of ${items.length} packages`;
+}
+
+fetch(CATALOG)
+  .then(r => { if (!r.ok) throw new Error(r.status); return r.text(); })
+  .then(t => {
+    items = t.split("\n").map(l => l.trim()).filter(l => l && !l.startsWith("#"))
+      .map(l => { const i = l.indexOf(":"); return { name: l.slice(0, i), desc: l.slice(i + 1) }; })
+      .filter(p => p.name)
+      .sort((a, b) => a.name.localeCompare(b.name));
+    render("");
+  })
+  .catch(() => {
+    countEl.textContent = "Could not load the catalog.";
+    listEl.innerHTML = '<p class="tag">See the registry in the <a href="https://github.com/milio48/shill#-package-registry">README</a>.</p>';
+  });
+
+searchEl.addEventListener("input", e => render(e.target.value));
+
+document.addEventListener("click", e => {
+  const b = e.target.closest(".copy");
+  if (!b) return;
+  const txt = document.getElementById(b.dataset.for).textContent;
+  navigator.clipboard?.writeText(txt).then(() => {
+    b.textContent = "copied";
+    setTimeout(() => (b.textContent = "copy"), 1200);
+  });
+});
+</script>
+</body>
+</html>

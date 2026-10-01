@@ -80,6 +80,7 @@ Install any of these using `./shill.sh install <name>`.
 |------|-------------|
 | `proot-ubuntu` | Lightweight Ubuntu 24.04 (via PRoot, cwd-preserving) |
 | `proot-alpine` | Ultra-lightweight Alpine Linux (via PRoot, cwd-preserving) |
+| `alpine-openbox` | Lightweight Openbox desktop inside proot-alpine (VNC + noVNC browser) |
 
 ## 🏗️ Built-in Commands
 
@@ -125,6 +126,24 @@ proot-alpine add git         # apk add
 proot-alpine update          # apk update && apk upgrade
 proot-alpine run ls -la      # one-off command
 ```
+
+### 🖥️ Browser Web Desktop (`alpine-openbox`)
+
+Run a lightweight GUI desktop (Openbox + TigerVNC + noVNC) inside `proot-alpine`, accessible directly from any web browser:
+
+```bash
+# Requires proot-alpine installed first
+VNC_PASSWORD=secret ./shill.sh install alpine-openbox   # default password: 123456
+alpine-openbox start                                   # launch desktop (port 6080)
+alpine-openbox passwd <new-password>                   # change password anytime
+alpine-openbox stop                                    # stop desktop
+```
+
+Open `http://localhost:6080/` in your browser, or expose it publicly using Cloudflare Tunnel / Ngrok:
+```bash
+cloudflared tunnel --url http://localhost:6080
+```
+
 
 ## 🧑‍💻 Development Recipes
 

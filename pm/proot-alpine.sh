@@ -102,17 +102,13 @@ _install() {
         # Ensure essential directories exist
         mkdir -p "$_alpine_root/root" "$_alpine_root/tmp"
 
-        # DNS: mirror the host so package installs work during setup
+        # Setup DNS inside container (Cloudflare & Google public DNS)
         _log "Configuring DNS (resolv.conf)..."
-        if [ -f /etc/resolv.conf ]; then
-            cp /etc/resolv.conf "$_alpine_root/etc/resolv.conf"
-        else
-            printf "nameserver 8.8.8.8\nnameserver 8.8.4.4\n" > "$_alpine_root/etc/resolv.conf"
-        fi
+        printf "nameserver 1.1.1.1\nnameserver 8.8.8.8\n" > "$_alpine_root/etc/resolv.conf"
 
         # --- Optimization (Packages & Cleanup) ---
         _log "Optimizing system (Packages & Cleanup)..."
-        "$_proot_bin" -r "$_alpine_root" -0 -b /dev -b /sys -b /proc /bin/sh -c "
+        "$_proot_bin" -r "$_alpine_root" -0 -w / -b /dev -b /sys -b /proc /bin/sh -c "
             apk update &&
             apk upgrade &&
             apk add --no-cache bash ca-certificates coreutils shadow-login &&
@@ -150,10 +146,9 @@ export TERM="${TERM:-xterm-256color}"
 export LANG="C.UTF-8"
 export PS1='\u@\h:\w\$ '
 
-# Put proot's temp files on RAM when possible (noticeably faster)
-if [ -d /dev/shm ] && [ -w /dev/shm ]; then
-    export PROOT_TMP_DIR=/dev/shm
-fi
+# Safe PROOT_TMP_DIR inside guest rootfs (avoids noexec /dev/shm mount failures)
+export PROOT_TMP_DIR="$_ROOT/tmp"
+mkdir -p "$PROOT_TMP_DIR"
 
 _SHELL="/bin/sh"
 [ -x "$_ROOT/bin/bash" ] && _SHELL="/bin/bash"
@@ -183,15 +178,23 @@ if [ "$PWD" != "/" ] && [ -d "$PWD" ]; then
     _WORKDIR="$PWD"
 fi
 
+# Ensure DNS config exists in guest
+[ -f "$_ROOT/etc/resolv.conf" ] || printf "nameserver 1.1.1.1\nnameserver 8.8.8.8\n" > "$_ROOT/etc/resolv.conf" 2>/dev/null
+
 # Build proot arguments, keeping the guest command last.
-# (Each 'set --' prepends options, so quoting of paths is preserved.)
-set -- -r "$_ROOT" -0 -w "$_WORKDIR" -b /dev -b /sys -b /proc -b /tmp "$@"
-[ -f /etc/resolv.conf ] && set -- -b /etc/resolv.conf "$@"
+# Avoid overlapping mounts (if PWD is inside HOME, mounting HOME covers both)
+case "$PWD" in
+    "$HOME"/*|"$HOME")
+        [ -n "$HOME" ] && [ "$HOME" != "/" ] && [ -d "$HOME" ] && set -- -b "$HOME" "$@"
+        ;;
+    *)
+        [ "$_WORKDIR" != "/root" ] && [ -d "$_WORKDIR" ] && set -- -b "$_WORKDIR" "$@"
+        [ -n "$HOME" ] && [ "$HOME" != "/" ] && [ -d "$HOME" ] && set -- -b "$HOME" "$@"
+        ;;
+esac
+
 [ -f /etc/hosts ] && set -- -b /etc/hosts "$@"
-[ "$_WORKDIR" != "/root" ] && set -- -b "$_WORKDIR" "$@"
-if [ -n "$HOME" ] && [ "$HOME" != "/" ] && [ "$HOME" != "$_WORKDIR" ] && [ -d "$HOME" ]; then
-    set -- -b "$HOME" "$@"
-fi
+set -- -r "$_ROOT" -0 -w "$_WORKDIR" -b /dev -b /sys -b /proc -b /tmp "$@"
 
 exec "$_PROOT" "$@"
 WRAP

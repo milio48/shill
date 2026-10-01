@@ -96,20 +96,16 @@ _install() {
         tar -xf "$_tgz" -C "$_ubuntu_root" || _die "Extraction failed."
         rm -f "$_tgz"
 
-        # DNS: mirror the host so package installs work during setup
+        # Setup DNS inside container (Cloudflare & Google public DNS)
         _log "Configuring DNS (resolv.conf)..."
-        if [ -f /etc/resolv.conf ]; then
-            cp /etc/resolv.conf "$_ubuntu_root/etc/resolv.conf"
-        else
-            printf "nameserver 8.8.8.8\nnameserver 8.8.4.4\n" > "$_ubuntu_root/etc/resolv.conf"
-        fi
+        printf "nameserver 1.1.1.1\nnameserver 8.8.8.8\n" > "$_ubuntu_root/etc/resolv.conf"
 
         # --- Fine-tuning (GPG Fix, Locales & Cleanup) ---
         _log "Fine-tuning system (Locale & Cleanup)..."
         # 1. Insecure update to fetch the list despite missing keys.
         # 2. Install ubuntu-keyring unauthenticated to fix keys.
         # 3. Proper secure update, locales, then strip docs/caches.
-        "$_proot_bin" -r "$_ubuntu_root" -0 -b /dev -b /sys -b /proc /bin/sh -c "
+        "$_proot_bin" -r "$_ubuntu_root" -0 -w / -b /dev -b /sys -b /proc /bin/sh -c "
             export DEBIAN_FRONTEND=noninteractive
             apt-get update -o Acquire::AllowInsecureRepositories=true -o Acquire::AllowDowngradeToInsecureRepositories=true || true
             apt-get install -y --allow-unauthenticated -o APT::Get::AllowUnauthenticated=true ubuntu-keyring &&
@@ -152,10 +148,13 @@ export LANG="en_US.UTF-8"
 export DEBIAN_FRONTEND=noninteractive
 export PS1='\u@\h:\w\$ '
 
-# Put proot's temp files on RAM when possible (noticeably faster)
-if [ -d /dev/shm ] && [ -w /dev/shm ]; then
-    export PROOT_TMP_DIR=/dev/shm
-fi
+# Safe PROOT_TMP_DIR inside guest rootfs (avoids noexec /dev/shm mount failures)
+export PROOT_TMP_DIR="$_ROOT/tmp"
+mkdir -p "$PROOT_TMP_DIR"
+
+_SHELL="/bin/sh"
+[ -x "$_ROOT/bin/bash" ] && _SHELL="/bin/bash"
+[ -x "$_ROOT/usr/bin/bash" ] && _SHELL="/usr/bin/bash"
 
 # Convenience subcommands
 case "${1:-}" in
@@ -174,7 +173,7 @@ case "${1:-}" in
 esac
 
 # Default: interactive shell
-[ $# -eq 0 ] && set -- /bin/bash
+[ $# -eq 0 ] && set -- "$_SHELL"
 
 # Keep the current directory visible inside the guest
 _WORKDIR="/root"
@@ -182,15 +181,23 @@ if [ "$PWD" != "/" ] && [ -d "$PWD" ]; then
     _WORKDIR="$PWD"
 fi
 
+# Ensure DNS config exists in guest
+[ -f "$_ROOT/etc/resolv.conf" ] || printf "nameserver 1.1.1.1\nnameserver 8.8.8.8\n" > "$_ROOT/etc/resolv.conf" 2>/dev/null
+
 # Build proot arguments, keeping the guest command last.
-# (Each 'set --' prepends options, so quoting of paths is preserved.)
-set -- -r "$_ROOT" -0 -w "$_WORKDIR" -b /dev -b /sys -b /proc -b /tmp "$@"
-[ -f /etc/resolv.conf ] && set -- -b /etc/resolv.conf "$@"
+# Avoid overlapping mounts (if PWD is inside HOME, mounting HOME covers both)
+case "$PWD" in
+    "$HOME"/*|"$HOME")
+        [ -n "$HOME" ] && [ "$HOME" != "/" ] && [ -d "$HOME" ] && set -- -b "$HOME" "$@"
+        ;;
+    *)
+        [ "$_WORKDIR" != "/root" ] && [ -d "$_WORKDIR" ] && set -- -b "$_WORKDIR" "$@"
+        [ -n "$HOME" ] && [ "$HOME" != "/" ] && [ -d "$HOME" ] && set -- -b "$HOME" "$@"
+        ;;
+esac
+
 [ -f /etc/hosts ] && set -- -b /etc/hosts "$@"
-[ "$_WORKDIR" != "/root" ] && set -- -b "$_WORKDIR" "$@"
-if [ -n "$HOME" ] && [ "$HOME" != "/" ] && [ "$HOME" != "$_WORKDIR" ] && [ -d "$HOME" ]; then
-    set -- -b "$HOME" "$@"
-fi
+set -- -r "$_ROOT" -0 -w "$_WORKDIR" -b /dev -b /sys -b /proc -b /tmp "$@"
 
 exec "$_PROOT" "$@"
 WRAP
